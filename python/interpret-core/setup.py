@@ -2,6 +2,8 @@
 # Distributed under the MIT software license
 
 from setuptools import setup, find_packages
+from Cython.Build import cythonize
+import numpy as np
 
 name = "interpret-core"
 # NOTE: Version is replaced by a regex script.
@@ -118,4 +120,6 @@ setup(
     extras_require=extras,
     entry_points=entry_points,
     install_requires=[],
+    ext_modules=cythonize("interpret/glassbox/ebm/cythonized/predict.pyx"),
+    include_dirs=[np.get_include()],
 )
