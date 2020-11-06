@@ -29,6 +29,7 @@ docker: prepare-docker
 	    -p 127.0.0.1:7001:7001 \
 		-e INTERPRET_DOCKER_MODE='dev' \
 		--entrypoint /bin/sh $(DOCKER_IMG_NAME) -c "\
+			cd $(DOCKER_CWD)/python/interpret-api && pip install -e . &&\
 			cd $(DOCKER_CWD)/python/interpret-core && pip install -e . &&\
 			cd $(DOCKER_CWD)/python/interpret && pip install -e . &&\
 			cd $(DOCKER_CWD)/scripts && /bin/bash"
@@ -39,6 +40,7 @@ run-docker-notebook: prepare-docker
 	    -p 127.0.0.1:7001:7001 \
 		-e INTERPRET_DOCKER_MODE='dev' \
 		--entrypoint /bin/bash $(DOCKER_IMG_NAME) -c "\
+			cd $(DOCKER_CWD)/python/interpret-api && pip install -e . &&\
 			cd $(DOCKER_CWD)/python/interpret-core && pip install -e . &&\
 			cd $(DOCKER_CWD)/python/interpret && pip install -e . &&\
 			cd $(DOCKER_CWD)/examples/python/notebooks &&\
@@ -64,16 +66,20 @@ clean:
 install: build
 	-$(PIP) uninstall -y interpret
 	-$(PIP) uninstall -y interpret-core
+	-$(PIP) uninstall -y interpret-api
+	cd $(ROOTDIR)/python/interpret-api && $(PIP) install -e .
 	cd $(ROOTDIR)/python/interpret-core && $(PIP) install -e .
 	cd $(ROOTDIR)/python/interpret && $(PIP) install -e .
 
 
 build: build-wheel
 build-wheel: build-javascript build-native
+	cd $(ROOTDIR)/python/interpret-api && $(PYTHON) setup.py bdist_wheel -d $(ROOTDIR)/staging
 	cd $(ROOTDIR)/python/interpret-core && $(PYTHON) setup.py bdist_wheel -d $(ROOTDIR)/staging
 	cd $(ROOTDIR)/python/interpret && $(PYTHON) setup.py bdist_wheel -d $(ROOTDIR)/staging
 
 build-python:
+	cd $(ROOTDIR)/python/interpret-api && $(PYTHON) setup.py bdist_wheel -d $(ROOTDIR)/staging
 	cd $(ROOTDIR)/python/interpret-core && $(PYTHON) setup.py bdist_wheel -d $(ROOTDIR)/staging
 	cd $(ROOTDIR)/python/interpret && $(PYTHON) setup.py bdist_wheel -d $(ROOTDIR)/staging
 

@@ -207,6 +207,10 @@ jobs:
     displayName: 'Move interpret-inline.js to Python layer'
   - script: python setup.py bdist_wheel -d ../../staging
     condition: succeeded()
+    workingDirectory: 'python/interpret-api'
+    displayName: 'Build wheel (interpret-core)'
+  - script: python setup.py bdist_wheel -d ../../staging
+    condition: succeeded()
     workingDirectory: 'python/interpret-core'
     displayName: 'Build wheel (interpret-core)'
   - script: python setup.py bdist_wheel -d ../../staging
