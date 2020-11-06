@@ -4,8 +4,7 @@
 
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.datasets import load_boston
-import numpy as np
-from ..treeinterpreter import TreeInterpreter
+from interpret.greybox.treeinterpreter import TreeInterpreter
 
 from treeinterpreter import treeinterpreter as ti
 

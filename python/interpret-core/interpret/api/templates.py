@@ -1,7 +1,7 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from .base import ExplanationMixin
+from interpret.api.base import ExplanationMixin
 
 
 class FeatureValueExplanation(ExplanationMixin):
@@ -72,14 +72,14 @@ class FeatureValueExplanation(ExplanationMixin):
         Returns:
             A Plotly figure.
         """
-        from ..visual.plot import (
+        from interpret.visual.plot import (
             plot_line,
             plot_bar,
             plot_horizontal_bar,
             mli_plot_horizontal_bar,
             is_multiclass_local_data_dict,
         )
-        from ..visual.plot import (
+        from interpret.visual.plot import (
             get_sort_indexes,
             get_explanation_index,
             sort_take,

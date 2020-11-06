@@ -1,7 +1,7 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from ..postprocessing import multiclass_postprocess
+from interpret.glassbox.ebm.postprocessing import multiclass_postprocess
 import numpy as np
 
 

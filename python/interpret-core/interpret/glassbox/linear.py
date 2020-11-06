@@ -1,11 +1,11 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from ..api.base import ExplainerMixin
-from ..api.templates import FeatureValueExplanation
-from ..utils import gen_name_from_class, gen_global_selector, gen_local_selector
-from ..utils import gen_perf_dicts, hist_per_column
-from ..utils import unify_data
+from interpret.api.base import ExplainerMixin
+from interpret.api.templates import FeatureValueExplanation
+from interpret.utils import gen_name_from_class, gen_global_selector, gen_local_selector
+from interpret.utils import gen_perf_dicts, hist_per_column
+from interpret.utils import unify_data
 
 from abc import abstractmethod
 from sklearn.base import is_classifier
@@ -299,7 +299,7 @@ class LinearExplanation(FeatureValueExplanation):
         Returns:
             A Plotly figure.
         """
-        from ..visual.plot import (
+        from interpret.visual.plot import (
             sort_take,
             mli_sort_take,
             get_sort_indexes,

@@ -33,7 +33,8 @@ def debug_info():
     Returns:
         A dictionary that contains debug info across the interpret package.
     """
-    from . import __version__, status_show_server
+    from interpret.version import __version__
+    from interpret.visual import status_show_server
 
     debug_dict = {}
     debug_dict["interpret.__version__"] = __version__
@@ -141,7 +142,7 @@ def debug_mode(log_filename="log.txt", log_level="INFO", native_debug=True):
     """
     import json
     import logging
-    from .glassbox.ebm import internal
+    from interpret.glassbox.ebm import internal
 
     # Exit fast on second call.
     if this.is_debug_mode:
@@ -193,13 +194,3 @@ def register_log(filename, level="DEBUG"):
     root.addHandler(handler)
 
     return handler
-
-
-if __name__ == "__main__":  # pragma: no cover
-    import pytest
-    import os
-
-    register_log("test-log.txt")
-
-    script_path = os.path.dirname(os.path.abspath(__file__))
-    pytest.main(["--rootdir={0}".format(script_path), script_path])

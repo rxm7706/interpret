@@ -1,7 +1,7 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from ..decisiontree import ClassificationTree, RegressionTree
+from interpret.glassbox.decisiontree import ClassificationTree, RegressionTree
 from sklearn.datasets import load_breast_cancer, load_boston
 from sklearn.tree import DecisionTreeClassifier as SKDT
 from sklearn.tree import DecisionTreeRegressor as SKRT

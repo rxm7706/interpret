@@ -5,14 +5,14 @@
 # TODO PK add a test with a real regression dataset
 # TODO PK add a test with more than 1 multiclass interaction
 
-from ....test.utils import (
+from interpret.test.utils import (
     synthetic_multiclass,
     synthetic_classification,
     adult_classification,
     iris_classification,
 )
-from ....test.utils import synthetic_regression
-from ..ebm import ExplainableBoostingRegressor, ExplainableBoostingClassifier
+from interpret.test.utils import synthetic_regression
+from interpret.glassbox import ExplainableBoostingRegressor, ExplainableBoostingClassifier
 
 import numpy as np
 import pandas as pd
@@ -218,7 +218,7 @@ def test_ebm_synthetic_classification():
 
 
 def _smoke_test_explanations(global_exp, local_exp, port):
-    from .... import preserve, show, shutdown_show_server, set_show_addr
+    from interpret.visual import preserve, show, shutdown_show_server, set_show_addr
 
     set_show_addr(("127.0.0.1", port))
 

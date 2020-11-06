@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and the versioning is mostly derived from [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Upcoming (TODO: Remove before release)
+### Breaking Changes
+- Top-level methods at `interpret` namespace have been moved to `interpret.visual`:
+  - ```
+    interpret.show -> interpret.visual.show
+    interpret.show_link -> interpret.visual.show_link
+    interpret.set_show_addr -> interpret.visual.set_show_addr
+    interpret.get_show_addr -> interpret.visual.get_show_addr
+    
+    interpret.preserve -> interpret.visual.preserve
+    interpret.shutdown_show_server -> interpret.visual.shutdown_show_server
+    interpret.init_show_server -> interpret.visual.init_show_server
+    interpret.status_show_server -> interpret.visual.status_show_server
+    interpret.set_visualize_provider -> interpret.visual.set_visualize_provider
+    interpret.get_visualize_provider -> interpret.visual.get_visualize_provider
+    
+    interpret.__version__ -> interpret.version.__version__
+    ```
+- Default null handler for interpret logging is no longer registered.
+
+
 ## [v0.2.2] - 2020-10-19
 ### Fixed
 - Fixed bug on predicting unknown categories with EBM.

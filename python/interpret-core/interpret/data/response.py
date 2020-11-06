@@ -1,8 +1,8 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from ..api.base import ExplainerMixin, ExplanationMixin
-from ..utils import unify_data, gen_name_from_class, gen_global_selector
+from interpret.api.base import ExplainerMixin, ExplanationMixin
+from interpret.utils import unify_data, gen_name_from_class, gen_global_selector
 
 import numpy as np
 from scipy.stats import pearsonr
@@ -169,7 +169,7 @@ class MarginalExplanation(ExplanationMixin):
         Returns:
             A Plotly figure.
         """
-        from ..visual.plot import plot_density
+        from interpret.visual.plot import plot_density
         import plotly.graph_objs as go
 
         data_dict = self.data(key)
@@ -376,7 +376,7 @@ class ClassHistogramExplanation(ExplanationMixin):
         Returns:
             A Plotly figure.
         """
-        from ..visual.plot import plot_density, COLORS
+        from interpret.visual.plot import plot_density, COLORS
         import plotly.graph_objs as go
 
         data_dict = self.data(key)

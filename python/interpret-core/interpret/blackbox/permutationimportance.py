@@ -7,7 +7,7 @@
 # import sklearn.metrics
 # from scipy.sparse import SparseEfficiencyWarning
 #
-# from ..utils import gen_name_from_class, gen_local_selector
+# from interpret.utils import gen_name_from_class, gen_local_selector
 #
 # from interpret.api.base import ExplainerMixin
 # from interpret.api.templates import FeatureValueExplanation

@@ -6,7 +6,7 @@ import re
 import requests
 import threading
 import os
-from . import udash
+from interpret.visual import udash
 
 from gevent.pywsgi import WSGIServer
 from flask import Flask

@@ -2,9 +2,9 @@
 # Distributed under the MIT software license
 
 from sklearn.base import ClassifierMixin
-from ..api.base import ExplainerMixin, ExplanationMixin
-from ..utils import gen_name_from_class, gen_global_selector, gen_local_selector, gen_perf_dicts
-from ..utils import unify_data
+from interpret.api.base import ExplainerMixin, ExplanationMixin
+from interpret.utils import gen_name_from_class, gen_global_selector, gen_local_selector, gen_perf_dicts
+from interpret.utils import unify_data
 
 from copy import deepcopy
 import numpy as np
@@ -71,7 +71,7 @@ class RulesExplanation(ExplanationMixin):
         Returns:
             HTML as string.
         """
-        from ..visual.plot import rules_to_html
+        from interpret.visual.plot import rules_to_html
 
         data_dict = self.data(key)
         if data_dict is None:

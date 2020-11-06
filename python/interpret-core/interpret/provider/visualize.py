@@ -4,10 +4,10 @@
 from abc import ABC, abstractmethod
 import logging
 
-from ..utils.environment import EnvironmentDetector, is_cloud_env
+from interpret.utils.environment import EnvironmentDetector, is_cloud_env
 from warnings import warn
 
-from ..version import __version__
+from interpret.version import __version__
 
 JS_URL = "https://unpkg.com/@interpretml/interpret-inline@{}/dist/interpret-inline.js".format(
     __version__
@@ -155,7 +155,7 @@ class DashProvider(VisualizeProvider):
         """
         Initialize a new AppRunner
         """
-        from ..visual.dashboard import AppRunner
+        from interpret.visual.dashboard import AppRunner
 
         app_runner = AppRunner(
             addr=addr, base_url=base_url, use_relative_links=use_relative_links
@@ -195,7 +195,7 @@ class InlineProvider(VisualizeProvider):
         self.js_url = js_url
 
     def render(self, explanation, key=-1, **kwargs):
-        from ..visual.inline import render
+        from interpret.visual.inline import render
 
         render(
             explanation,

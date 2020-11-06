@@ -1,7 +1,7 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from setuptools import setup, find_packages
+from setuptools import setup, find_namespace_packages
 
 name = "interpret"
 # NOTE: Version is replaced by a regex script.
@@ -38,7 +38,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/interpretml/interpret",
-    packages=find_packages(),
+    packages=find_namespace_packages(include=['interpret.*']),
     package_data={},
     classifiers=[
         "Programming Language :: Python :: 3.6",

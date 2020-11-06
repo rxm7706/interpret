@@ -1,7 +1,7 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from ..environment import EnvironmentDetector
+from interpret.utils.environment import EnvironmentDetector
 
 
 def test_environment_detector():

@@ -1,1 +1,1 @@
-from .purify import *
+from interpret.glassbox.ebm.research.purify import *

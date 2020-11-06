@@ -3,7 +3,7 @@
 
 import sys
 import logging
-from ..provider.visualize import AutoVisualizeProvider, PreserveProvider, DashProvider
+from interpret.provider.visualize import AutoVisualizeProvider, PreserveProvider, DashProvider
 
 log = logging.getLogger(__name__)
 

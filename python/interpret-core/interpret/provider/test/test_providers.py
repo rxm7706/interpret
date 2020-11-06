@@ -1,8 +1,8 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from ..compute import JobLibProvider, AzureMLProvider
-from ..visualize import (
+from interpret.provider.compute import JobLibProvider, AzureMLProvider
+from interpret.provider.visualize import (
     AutoVisualizeProvider,
     DashProvider,
     PreserveProvider,
@@ -10,8 +10,8 @@ from ..visualize import (
 )
 import pytest
 
-from ...test.utils import synthetic_classification
-from ...glassbox import LogisticRegression
+from interpret.test.utils import synthetic_classification
+from interpret.glassbox import LogisticRegression
 
 
 def task_fn(x, y):
@@ -47,7 +47,7 @@ def test_azureml_provider():
 @pytest.mark.slow
 def test_auto_visualize_provider(example_explanation):
     # NOTE: We know this environment is going to use Dash.
-    from ...visual.dashboard import AppRunner
+    from interpret.visual.dashboard import AppRunner
 
     ip = "127.0.0.1"
     port = "7200"

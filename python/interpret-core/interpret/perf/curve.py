@@ -1,8 +1,8 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from ..api.base import ExplainerMixin, ExplanationMixin
-from ..utils import unify_data, gen_name_from_class, unify_predict_fn
+from interpret.api.base import ExplainerMixin, ExplanationMixin
+from interpret.utils import unify_data, gen_name_from_class, unify_predict_fn
 from sklearn.metrics import roc_curve, auc
 from sklearn.metrics import precision_recall_curve, average_precision_score
 
@@ -198,7 +198,7 @@ class ROCExplanation(ExplanationMixin):
         Returns:
             A Plotly figure.
         """
-        from ..visual.plot import plot_performance_curve
+        from interpret.visual.plot import plot_performance_curve
 
         data_dict = self.data(key)
         if data_dict is None:
@@ -269,7 +269,7 @@ class PRExplanation(ExplanationMixin):
         Returns:
             A Plotly figure.
         """
-        from ..visual.plot import plot_performance_curve
+        from interpret.visual.plot import plot_performance_curve
 
         data_dict = self.data(key)
         if data_dict is None:

@@ -1,9 +1,9 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from ..api.base import ExplainerMixin
-from ..api.templates import FeatureValueExplanation
-from ..utils import gen_name_from_class, unify_data, gen_perf_dicts, gen_local_selector
+from interpret.api.base import ExplainerMixin
+from interpret.api.templates import FeatureValueExplanation
+from interpret.utils import gen_name_from_class, unify_data, gen_perf_dicts, gen_local_selector
 
 from sklearn.base import is_classifier
 import numpy as np
