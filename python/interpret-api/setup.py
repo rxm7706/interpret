@@ -7,7 +7,7 @@ name = "interpret-api"
 # NOTE: Versioning for interpret-api does not update step-lock with other interpret packages.
 version = "0.0.1"
 long_description = """
-Zero-dependency Interpret API for machine learning interpretability.
+Minimal dependency Interpret API for machine learning interpretability.
 
 https://github.com/interpretml/interpret
 """
@@ -30,5 +30,8 @@ setup(
         "Development Status :: 3 - Alpha",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
+    ],
+    install_requires=[
+        "slicer>=0.0.5",
     ],
 )

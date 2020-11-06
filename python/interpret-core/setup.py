@@ -54,6 +54,7 @@ joblib_dep = "joblib>=0.11"
 extras = {
     # Core
     "required": [
+        "interpret-api==0.0.1",
         "numpy>=1.11.1",
         "scipy>=0.18.1",
         "pandas>=0.19.2",
