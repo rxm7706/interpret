@@ -319,7 +319,7 @@ jobs:
   - script: python -m pip install -e .
     condition: succeeded()
     workingDirectory: python/interpret
-    displayName: 'Install local interpret
+    displayName: 'Install local interpret'
   - script: python -m pip install numpy scipy
     condition: succeeded()
     workingDirectory: python/interpret-core
