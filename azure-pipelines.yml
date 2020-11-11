@@ -308,10 +308,18 @@ jobs:
   - script: python -m pip install --upgrade pip setuptools wheel
     condition: succeeded()
     displayName: 'Install tools'
-  - script: python -m pip install .
+  - script: python -m pip install -e .
     condition: succeeded()
     workingDirectory: python/interpret-api
     displayName: 'Install local interpret-api'
+  - script: python -m pip install -e .
+    condition: succeeded()
+    workingDirectory: python/interpret-core
+    displayName: 'Install local interpret-core'
+  - script: python -m pip install -e .
+    condition: succeeded()
+    workingDirectory: python/interpret
+    displayName: 'Install local interpret
   - script: python -m pip install numpy scipy
     condition: succeeded()
     workingDirectory: python/interpret-core
