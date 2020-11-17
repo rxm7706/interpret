@@ -335,12 +335,12 @@ jobs:
     displayName: 'Install requirements (Linux/Mac/Windows)'
   - script: |
       set PATH=%PATH%;%GeckoWebDriver%
-      python -m pytest -vvv -n auto --runslow --runselenium --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
+      python -m pytest -vvv --runslow --runselenium --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
     workingDirectory: python/interpret-core
     condition: and(startsWith(variables['image.name'], 'windows'), or(eq(variables['Build.Reason'], 'Schedule'), in(variables['Build.SourceBranch'], 'refs/heads/master', 'refs/heads/develop')))
     displayName: 'Run pytest (Windows scheduled / master / develop)'
   - script: |
-      python -m pytest -vvv -n auto --runslow --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
+      python -m pytest -vvv --runslow --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
     workingDirectory: python/interpret-core
     condition: not(and(startsWith(variables['image.name'], 'windows'), or(eq(variables['Build.Reason'], 'Schedule'), in(variables['Build.SourceBranch'], 'refs/heads/master', 'refs/heads/develop'))))
     displayName: 'Run pytest (Rest)'
