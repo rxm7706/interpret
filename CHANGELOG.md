@@ -22,6 +22,7 @@ and the versioning is mostly derived from [Semantic Versioning](https://semver.o
     
     interpret.__version__ -> interpret.version.__version__
     ```
+- Module `interpret.utils.environment` has moved to `interpret.provider.environment`.
 - Default null handler for interpret logging is no longer registered.
 
 
