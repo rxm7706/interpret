@@ -86,7 +86,7 @@ extras = {
     "testing": [
         "pytest>=4.3.0,<=6.0.2",
         "pytest-runner>=4.4",
-        "pytest-xdist>=1.29",
+        # "pytest-xdist>=1.29",
         "nbconvert>=5.4.1",
         "selenium>=3.141.0",
         "pytest-cov>=2.6.1",
