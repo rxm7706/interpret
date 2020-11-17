@@ -2,8 +2,6 @@ import json
 
 from slicer import Slicer as S
 from interpret.newapi.component import Component
-from interpret.newapi.serialization import ExplanationJSONDecoder, ExplanationJSONEncoder
-
 
 class Explanation(S):
     @classmethod
@@ -44,6 +42,8 @@ class Explanation(S):
 
     @classmethod
     def from_json(cls, json_str):
+        from interpret.newapi.serialization import ExplanationJSONDecoder
+
         d = json.loads(json_str, cls=ExplanationJSONDecoder)
         instance = d["content"]
         return instance
@@ -56,6 +56,7 @@ class Explanation(S):
         return instance
 
     def to_json(self, **kwargs):
+        from interpret.newapi.serialization import ExplanationJSONEncoder
         version = "0.0.1"
         di = {
             "version": version,
