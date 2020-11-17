@@ -1,7 +1,7 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from interpret.utils.shap import shap_explain_local
+from interpret.util.shap import shap_explain_local
 from sklearn.base import is_classifier
 
 from interpret.api.base import ExplainerMixin

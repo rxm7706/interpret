@@ -1,6 +1,6 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
-from interpret.utils.shap import shap_explain_local
+from interpret.util.shap import shap_explain_local
 
 from interpret.api.base import ExplainerMixin
 from interpret.utils import unify_predict_fn, unify_data
