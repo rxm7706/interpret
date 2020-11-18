@@ -1,8 +1,8 @@
 import pytest
 
-from interpret.util.all import gen_perf_dicts
-from interpret.util.all import gen_feat_val_list, gen_name_from_class
-from interpret.util.all import reverse_map, unify_data, unify_vector
+from interpret.utils.all import gen_perf_dicts
+from interpret.utils.all import gen_feat_val_list, gen_name_from_class
+from interpret.utils.all import reverse_map, unify_data, unify_vector
 import numpy as np
 import pandas as pd
 
