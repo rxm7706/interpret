@@ -32,10 +32,10 @@ class BinnedData(Component):
 class TabularData(Component):
     def __init__(self, data, feature_names=None, feature_types=None):
         if not isinstance(feature_names, (Obj, Alias, type(None))):
-            feature_names = Alias(feature_names, 0)
+            feature_names = Alias(feature_names, 1)
 
         if not isinstance(feature_types, (Obj, Alias, type(None))):
-            feature_types = Alias(feature_types, 0)
+            feature_types = Alias(feature_types, 1)
 
         self.fields = locals()
         del self.fields['self']
@@ -50,12 +50,12 @@ class Bound(Component):
 class Extra(Component):
     def __init__(
             self,
-            display_data = None,
-            output_names = None,
-            output_indexes = None,  # Alias?
-            main_effects = None,
-            hierarchical_values = None,
-            clustering = None,
+            display_data=None,
+            output_names=None,
+            output_indexes=None,  # Alias?
+            main_effects=None,
+            hierarchical_values=None,
+            clustering=None,
     ):
         self.fields = locals()
         del self.fields['self']

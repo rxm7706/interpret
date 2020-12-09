@@ -3,6 +3,8 @@ import json
 from slicer import Slicer as S
 from interpret.newapi.component import Component
 
+# TODO: .component and .append to be made protected for minimal API surface.
+
 class Explanation(S):
     @classmethod
     def _init_explanation(cls, instance, *args):
@@ -18,6 +20,7 @@ class Explanation(S):
     def __init__(self, **kwargs):
         self.__class__._init_explanation(self, *list(kwargs.values()))
 
+    # TODO: Needs further discussion at design-level.
     def append(self, component):
         if not isinstance(component, Component):
             raise Exception(f"Can't append object of type {type(component)} to this object.")
@@ -75,3 +78,4 @@ class AttribExplanation(Explanation):
             bound=bound,
             **kwargs,
         )
+
