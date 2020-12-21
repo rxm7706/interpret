@@ -18,24 +18,30 @@ class Attribution(Component):
 
 
 class BinnedData(Component):
-    def __init__(self, data, data_counts=None, feature_names=None, feature_types=None):
+    def __init__(self, data, data_counts=None, feature_names=None, feature_types=None, feature_indexes=None):
         if not isinstance(feature_names, (Obj, Alias, type(None))):
             feature_names = Alias(feature_names, 0)
 
         if not isinstance(feature_types, (Obj, Alias, type(None))):
             feature_types = Alias(feature_types, 0)
 
+        if not isinstance(feature_indexes, (Obj, Alias, type(None))):
+            feature_indexes = Alias(feature_indexes, 0)
+
         self.fields = locals()
         del self.fields['self']
 
 
 class TabularData(Component):
-    def __init__(self, data, feature_names=None, feature_types=None):
+    def __init__(self, data, feature_names=None, feature_types=None, feature_indexes=None):
         if not isinstance(feature_names, (Obj, Alias, type(None))):
             feature_names = Alias(feature_names, 1)
 
         if not isinstance(feature_types, (Obj, Alias, type(None))):
             feature_types = Alias(feature_types, 1)
+
+        if not isinstance(feature_indexes, (Obj, Alias, type(None))):
+            feature_indexes = Alias(feature_indexes, 1)
 
         self.fields = locals()
         del self.fields['self']

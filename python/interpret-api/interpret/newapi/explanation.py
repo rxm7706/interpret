@@ -5,6 +5,7 @@ from interpret.newapi.component import Component
 
 # TODO: .component and .append to be made protected for minimal API surface.
 
+
 class Explanation(S):
     @classmethod
     def _init_explanation(cls, instance, *args):
@@ -36,12 +37,26 @@ class Explanation(S):
         return item in self.components
 
     def __repr__(self):
-        record = self.components.copy()
-        record = {str(key.__name__): str(list(val.fields.keys())) for key, val in record.items()}
         class_name = self.__class__.__name__
-        attributes = json.dumps(record, indent=2)
+        # record = {
+        #     str(key.__name__): str(list(val.fields.keys())) for key, val in record.items()
+        # }
+        # attributes = json.dumps(record, indent=2)
 
-        return f"{class_name}:\n{attributes}"
+        record = self.components.copy()
+        component_names = [
+            str(key.__name__) for key in record.keys()
+        ]
+        component_names = "\n- ".join(component_names)
+
+        fields = []
+        for record_key, record_val in record.items():
+            for field_name, field_val in record_val.fields.items():
+                fields.append(f".{field_name} = {str(field_val)[:40]}")
+        fields = "\n".join(fields)
+
+        # return f'{class_name}:\n- {component_names}\n\n{fields}'
+        return fields
 
     @classmethod
     def from_json(cls, json_str):
