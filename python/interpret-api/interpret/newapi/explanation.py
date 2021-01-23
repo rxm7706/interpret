@@ -52,7 +52,7 @@ class Explanation(S):
         fields = []
         for record_key, record_val in record.items():
             for field_name, field_val in record_val.fields.items():
-                fields.append(f".{field_name} = {str(field_val)[:40]}")
+                fields.append(f".{field_name} = {str(self.__getattr__(field_name))[:40]}")
         fields = "\n".join(fields)
 
         # return f'{class_name}:\n- {component_names}\n\n{fields}'
