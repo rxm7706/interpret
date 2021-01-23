@@ -3,12 +3,13 @@ from json import JSONEncoder, JSONDecoder
 from slicer import Alias
 from slicer import Obj
 from importlib import import_module
-from interpret.newapi.explanation import Explanation
-from interpret.newapi.component import Component
 
 
 class ExplanationJSONEncoder(JSONEncoder):
     def default(self, o):
+        from interpret.newapi.explanation import Explanation
+        from interpret.newapi.component import Component
+
         if isinstance(o, np.ndarray):
             return {
                 "_type": "array",

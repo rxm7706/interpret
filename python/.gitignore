@@ -18,3 +18,5 @@ dev-log.txt
 geckodriver.log
 coverage.xml
 htmlcov/
+__pycache__/
+*.pyc
