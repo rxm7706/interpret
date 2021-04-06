@@ -1372,6 +1372,130 @@ class BaseEBM(BaseEstimator):
             selector=selector,
         )
 
+    def edit(self, feature, edit_range, edit_value, error_size=0, class_index=0):
+        """ [WIP] Edits a single graph inplace on an ExplainableBoostingMachine after training. 
+            Use with caution and domain expertise. 
+            Note: Editing the edges of graphs will modify extrapolated prediction values.
+
+        Args:
+            feature: Name or index of feature to edit.
+            edit_range: Tuple of range of feature values to edit. 
+                        For numeric features, defines min and max of range of values to edit. 
+                        For categorical features, defines all categories to edit (including unseen). 
+            edit_value: New learned value to assign to edit_range portions of feature.
+            error_size: Size of confidence interval or error bar to assign to edit_range regions. Does not affect predictions.
+            class_index: Specifies which class to modify in multiclass settings. 
+
+        Returns:
+            None
+        """
+        if isinstance(feature, str):
+            try:
+                feature_index = self.feature_names.index(feature)
+            except:
+                raise KeyError("Unable to find provided feature in feature names. Consider passing an index directly.")
+        elif isinstance(feature, int):
+            feature_index = feature
+        else:
+            raise TypeError("Feature must be a string (name of feature) or integer (index of feature).")
+
+        feature_type = self.feature_types[feature_index]
+        additive_term = self.additive_terms_[feature_index]
+        standard_deviation = self.term_standard_deviations_[feature_index]
+
+        is_multiclass = False
+        class_indicators = [slice(None, None, None)] # Never subset for binary/regression
+        if is_classifier(self) and len(self.classes_) > 2:
+            is_multiclass = True
+            class_indicators = list(range(len(self.classes_)))
+            raise Exception("Model editing for multiclass classification models is still under development.")
+
+        # additive_term = additive_term[index_tup]
+        # standard_deviation = standard_deviation[index_tup]
+
+        if feature_type == 'continuous':
+            if edit_range[0] >= edit_range[1]:
+                raise ValueError("Edit range for continuous features must have lower bound first, and upper bound second.") 
+            if len(edit_range) > 2:
+                raise ValueError("Edit range for continuous features can only accept 2 values (lower and upper bound of edit).")
+
+            # Isolate ranges of bins
+            bin_cuts = self.preprocessor_.col_bin_edges_[feature_index]
+            edit_indexes = np.searchsorted(bin_cuts, edit_range)
+
+            # Short circuit for editing specific bin
+            if edit_range[0] in bin_cuts and edit_range[1] in bin_cuts:
+                self.additive_terms_[feature_index][edit_indexes[1] + 1] = edit_value
+                self.term_standard_deviations_[feature_index][edit_indexes[1] + 1] = error_size
+                return
+
+            # Replace existing bin definition for edit range
+            keep_mask = np.ones(bin_cuts.shape, dtype='bool')
+            keep_mask[edit_indexes[0] : edit_indexes[1]] = False
+
+            # Remove duplicates and reformat as list
+            new_bin_cuts = list(sorted(set(np.insert(bin_cuts[keep_mask], edit_indexes[0], edit_range))))
+
+            # Modify additive terms and standard deviations -- always keep first and last terms
+            keep_mask = np.insert(keep_mask, [0, len(keep_mask)], 1)
+
+            if edit_range[1] not in bin_cuts: # Skip when right edge definition already exists for np.insert
+                additive_term = np.insert(
+                    additive_term[keep_mask], edit_indexes[0] + 1, additive_term[edit_indexes[0] + 1]
+                )
+                standard_deviation = np.insert(
+                    standard_deviation[keep_mask], edit_indexes[0] + 1, standard_deviation[edit_indexes[0] + 1]
+                )
+
+            new_additive_term = np.insert(additive_term, edit_indexes[0] + 2, edit_value)
+            new_standard_deviation = np.insert(standard_deviation, edit_indexes[0] + 2, error_size)
+
+            # Edit mins/max of features if user supplied values exceed previous domain
+            if edit_range[0] < self.preprocessor_.col_min_[feature_index]:
+                self.preprocessor_.col_min_[feature_index] = edit_range[0]
+                new_additive_term[1] = new_additive_term[2]
+                new_standard_deviation[1] = new_standard_deviation[2]
+
+            if edit_range[1] > self.preprocessor_.col_max_[feature_index]:
+                self.preprocessor_.col_max_[feature_index] = edit_range[1]
+                new_additive_term[-1] = new_additive_term[-2]
+                new_standard_deviation[-1] = new_standard_deviation[-2]
+
+            # Update objects
+            self.preprocessor_.col_bin_edges_[feature_index] = np.array(new_bin_cuts)
+            self.additive_terms_[feature_index] = new_additive_term
+            self.term_standard_deviations_[feature_index] = new_standard_deviation
+
+        elif feature_type == 'categorical':
+            if not isinstance(edit_range, (list, tuple)): # TODO: Discuss if we should do this
+                raise TypeError("edit_range has to be a tuple or list.")
+
+            mapping = self.preprocessor_.col_mapping_[feature_index]
+
+            edit_indexes = []
+            for element in edit_range:
+                if element in mapping:
+                    element_index = mapping[element]
+                else:
+                    element_index = len(mapping) + 1
+                    self.preprocessor_.col_mapping_[feature_index][element] = element_index
+
+                edit_indexes.append(element_index)
+
+            # Make edits to all cat indexes
+            for cat_index in sorted(edit_indexes):
+                self.additive_terms_[feature_index] = np.insert(
+                    self.additive_terms_[feature_index], cat_index, edit_value
+                )
+                self.term_standard_deviations_[feature_index] = np.insert(
+                    self.term_standard_deviations_[feature_index], cat_index, error_size
+                )
+
+        elif feature_type == 'pairwise':
+            raise NotImplementedError("Editing pairwise interaction terms is still under development.")
+            
+        return
+
 
 class ExplainableBoostingClassifier(BaseEBM, ClassifierMixin, ExplainerMixin):
     """ Explainable Boosting Classifier. The arguments will change in a future release, watch the changelog. """
