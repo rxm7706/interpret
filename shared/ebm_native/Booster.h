@@ -32,6 +32,8 @@ namespace DEFINED_ZONE_NAME {
 #endif // DEFINED_ZONE_NAME
 
 class Booster final {
+public:
+
    ptrdiff_t m_runtimeLearningTypeOrCountTargetClasses;
 
    size_t m_cFeatureAtomics;
@@ -64,8 +66,6 @@ class Booster final {
       const FeatureGroup * const * const apFeatureGroups,
       const size_t cVectorLength
    );
-
-public:
 
    Booster() = default; // preserve our POD status
    ~Booster() = default; // preserve our POD status

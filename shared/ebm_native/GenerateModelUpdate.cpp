@@ -688,6 +688,13 @@ static IntEbmType GenerateModelUpdateInternal(
    const ptrdiff_t runtimeLearningTypeOrCountTargetClasses = pBooster->GetRuntimeLearningTypeOrCountTargetClasses();
    const bool bClassification = IsClassification(runtimeLearningTypeOrCountTargetClasses);
 
+   if(0 == pBooster->m_trainingSet.GetCountSamples()) {
+      pBooster->m_apSamplingSets = nullptr;
+   } else {
+      SamplingSet::FreeSamplingSets(pBooster->m_cSamplingSets, pBooster->m_apSamplingSets);
+      pBooster->m_apSamplingSets = SamplingSet::GenerateSamplingSets(&pBooster->m_randomStream, &pBooster->m_trainingSet, nullptr, pBooster->m_cSamplingSets);
+   }
+
    LOG_0(TraceLevelVerbose, "Entered GenerateModelUpdateInternal");
 
    const size_t cSamplingSetsAfterZero = (0 == pBooster->GetCountSamplingSets()) ? 1 : pBooster->GetCountSamplingSets();
