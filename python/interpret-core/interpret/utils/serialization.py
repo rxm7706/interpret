@@ -2,41 +2,21 @@ import pandas as pd
 import numpy as np
 import json
 
-from ..glassbox.ebm.ebm import BaseCoreEBM, EBMExplanation, EBMPreprocessor, ExplainableBoostingClassifier
+from ..glassbox.ebm.ebm import EBMExplanation
 from json import JSONEncoder, JSONDecoder
 
-class InterpretJSONEncoder(JSONEncoder):
+class ExplanationJSONEncoder(JSONEncoder):
 
     def default(self, obj):
-        if isinstance(obj, EBMExplanation):
-            return {
-                "_type": "EBMExplanation",
-                "value": obj.__dict__
-            }
-        elif isinstance(obj, ExplainableBoostingClassifier):
-            return {
-                "_type": "ExplainableBoostingClassifier",
-                "value": obj.__dict__,
-            }
-        elif isinstance(obj, EBMPreprocessor):
-            return {
-                "_type": "EBMPreprocessor",
-                "value": obj.__dict__,
-            }
-        elif isinstance(obj, BaseCoreEBM):
-            return {
-                "_type": "BaseCoreEBM",
-                "value": obj.__dict__,
-            }
-        elif isinstance(obj, np.ndarray):
+        if isinstance(obj, np.ndarray):
             return {
                 "_type": "np.ndarray",
                 "value": obj.tolist(),
             }
-        elif isinstance(obj, np.int32):
+        elif isinstance(obj, EBMExplanation):
             return {
-                "_type": "np.int32",
-                "value": int(obj)
+                "_type": "EBMExplanation",
+                "value": obj.__dict__
             }
         elif isinstance(obj, np.int64):
             return {
@@ -52,7 +32,7 @@ class InterpretJSONEncoder(JSONEncoder):
             return JSONEncoder.default(self, obj)
 
 
-class InterpretJSONDecoder(JSONDecoder):
+class ExplanationJSONDecoder(JSONDecoder):
 
     def __init__(self, *args, **kwargs):
         JSONDecoder.__init__(self, object_hook=self.object_hook, *args, **kwargs)
@@ -65,22 +45,31 @@ class InterpretJSONDecoder(JSONDecoder):
 
         if _type == "EBMExplanation":
             return deserialize_explanation(obj["value"])
-        elif _type == "ExplainableBoostingClassifier":
-            raise NotImplementedError(f'Deserialization of type {_type} '
-                            f'is not implemented')
         elif _type == "np.ndarray":
             return np.array(obj["value"])
-        elif _type == "np.int32":
-            return np.int32(obj["value"])
         elif _type == "np.int64":
             return np.int64(obj["value"])
         elif _type == "pd.DataFrame":
             return pd.read_json(obj["value"])
         return obj
 
+
+def serialize_explanation(explanation):
+    serializable_exp = {
+        "version" : "0.0.1",
+        "explanation_type" : explanation.explanation_type,
+        "internal_obj": explanation._internal_obj,
+        "feature_names": explanation.feature_names,
+        "feature_types": explanation.feature_types,
+        "name": explanation.name,
+        "selector": explanation.selector
+    }
+    return serializable_exp
+
+
 def deserialize_explanation(explanation_dict):
     return EBMExplanation(
-        explanation_dict["explanation_type"],
+        explanation_dict["explanation_object"],
         explanation_dict["_internal_obj"],
         explanation_dict["feature_names"],
         explanation_dict["feature_types"],
@@ -88,13 +77,10 @@ def deserialize_explanation(explanation_dict):
         explanation_dict["selector"]
     )
 
-# We're setting skipKeys as True to enable the serialization of
-# ExplainableBoostingClassifier. This, however, causes data loss (dicts will be skipped
-# if their keys are not serializable by default) and should be changed.
-def to_json(explanation, output_file):
-    with open(output_file, "w") as file:
-        json.dump(explanation, file, indent=4, cls=InterpretJSONEncoder, skipkeys=True)
+def exp_to_json(explanation, output_json):
+    with open(output_json, "w") as output_file:
+        json.dump(explanation, output_file, indent=4, cls=ExplanationJSONEncoder)
 
-def from_json(json_file):
-    with open(json_file, "r") as file:
-        return json.load(file, cls=InterpretJSONDecoder)
+def exp_from_json(json_file):
+    with open(json_file, "r") as output_json:
+        return json.load(output_json, cls=ExplanationJSONDecoder)
