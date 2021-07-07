@@ -2,8 +2,8 @@ from .explanation import *
 from slicer import Obj as O
 from slicer import Alias as A
 
-from interpret.newapi.explanation import AttribExplanation
-from interpret.newapi.component import BinnedData, Attribution
+from .explanation import AttribExplanation
+from .component import BinnedData, Attribution
 
 
 def test_explanation_serialize():
