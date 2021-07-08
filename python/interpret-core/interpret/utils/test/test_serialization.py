@@ -1,17 +1,12 @@
 from ...glassbox.ebm.ebm import ExplainableBoostingClassifier
-from ..serialization import ExplanationJSONEncoder, ExplanationJSONDecoder, exp_from_json, exp_to_json
+from ...glassbox.ebm.test.test_ebm import _smoke_test_explanations
 from ...test.utils import adult_classification
+from ..serialization import from_json, to_json
 
 import numpy as np
-from sklearn.model_selection import (
-    cross_validate,
-    StratifiedShuffleSplit,
-    train_test_split,
-)
+import os
 
-import pytest
-
-def inspect_global_exp(global_exp, file_name):
+def inspect_exp(global_exp, file_name):
     import os
     import pprint
     import inspect
@@ -22,11 +17,9 @@ def inspect_global_exp(global_exp, file_name):
     with open(output_path, "w") as f:
         pprint.pprint(inspect.getmembers(global_exp), stream=f)
 
-def test_explanation_serialization():
-
+def test_classification_serialization():
     data = adult_classification()
-    X = data["full"]["X"]
-    y = data["full"]["y"]
+
     X_tr = data["train"]["X"]
     y_tr = data["train"]["y"]
     X_te = data["test"]["X"]
@@ -36,15 +29,20 @@ def test_explanation_serialization():
     clf.fit(X_tr, y_tr)
 
     global_exp = clf.explain_global()
-
-    import os
+    local_exp = clf.explain_local(X_te[:5, :], y_te[:5])
 
     output_path = os.path.dirname(os.path.abspath(__file__))
-    output_path = os.path.join(output_path, "expToJson.json")
+    global_output_path = os.path.join(output_path, "globalExp.json")
+    local_output_path = os.path.join(output_path, "localExp.json")
 
-    exp_to_json(global_exp, output_path)
-    
-    new_exp = exp_from_json(output_path)
+    to_json(global_exp, global_output_path)
+    to_json(local_exp, local_output_path)
 
-    #inspect_global_exp(global_exp, "global_exp.txt")
-    #inspect_global_exp(new_exp, "new_exp.txt")
+    global_exp_from_json = from_json(global_output_path)
+    local_exp_from_json = from_json(local_output_path)
+
+    _smoke_test_explanations(global_exp, local_exp, 6000)
+    _smoke_test_explanations(global_exp_from_json, local_exp_from_json, 6000)
+
+    inspect_exp(global_exp, "global_exp.txt")
+    inspect_exp(global_exp_from_json, "new_exp.txt")
