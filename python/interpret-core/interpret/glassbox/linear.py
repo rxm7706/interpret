@@ -1,11 +1,17 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from ..api.base import ExplainerMixin
-from ..api.templates import FeatureValueExplanation
-from ..utils import gen_name_from_class, gen_global_selector, gen_local_selector
-from ..utils import gen_perf_dicts, hist_per_column
-from ..utils import unify_data
+from interpret.api.base import ExplainerMixin
+from interpret.api.templates import FeatureValueExplanation
+from interpret.utils import gen_name_from_class, gen_global_selector, gen_local_selector
+from interpret.utils import gen_perf_dicts, hist_per_column
+from interpret.utils import unify_data
+
+from interpret.utils.all import unify_data
+from interpret.newapi.explanation import AttribExplanation
+from interpret.newapi.component import Attribution, TabularData, Meta
+from slicer import Alias, Dim
+
 
 from abc import abstractmethod
 from sklearn.base import is_classifier
@@ -90,6 +96,42 @@ class BaseLinear:
         """
         X, _, _, _ = unify_data(X, None, self.feature_names, self.feature_types)
         return self._model().predict(X)
+
+
+    def new_explain_local(self, X, y=None):
+        X, y, _, _ = unify_data(X, y, self.feature_names, self.feature_types)
+        model = self._model()
+        intercept = model.intercept_
+        coef = model.coef_
+        scores = [coef * instance for instance in X] 
+        base_values = [intercept for _ in range(len(X))]
+
+        explanation = AttribExplanation(
+            Attribution(scores, base_values, units="term_contribution"),
+            TabularData(X, self.feature_names, self.feature_types),
+            Meta(source='linear', pivots=Dim([True, True]), dimension_names=["instances", "features"])
+        )
+        return explanation
+
+
+    def new_explain_global(self):
+        data = []
+        scores = []
+        coef = self._model().coef_
+        for i, _ in enumerate(self.feature_names):
+            datum = np.linspace(self.X_mins_[i], self.X_maxs_[i], 30)
+            score = coef[i] * datum
+            
+            data.append(datum)
+            scores.append(score)
+        
+        explanation = AttribExplanation(
+            Attribution(values=scores, units='term_contribution'),
+            TabularData(data=data, feature_names=Alias(self.feature_names, 0), feature_types=Alias(self.feature_types, 0)),
+            Meta(source='linear', pivots=Dim([True, False]), dimension_names=["features", "feature_values"])
+        )
+        
+        return explanation
 
     def explain_local(self, X, y=None, name=None):
         """ Provides local explanations for provided instances.

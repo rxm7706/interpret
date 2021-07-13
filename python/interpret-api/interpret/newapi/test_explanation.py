@@ -1,4 +1,4 @@
-from .explanation import *
+from interpret.newapi.explanation import *
 from slicer import Obj as O
 from slicer import Alias as A
 

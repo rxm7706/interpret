@@ -1,10 +1,10 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from ..api.base import ExplainerMixin
-from ..api.templates import FeatureValueExplanation
-from ..utils import unify_predict_fn, unify_data
-from ..utils import gen_name_from_class, gen_global_selector
+from interpret.api.base import ExplainerMixin
+from interpret.api.templates import FeatureValueExplanation
+from interpret.utils import unify_predict_fn, unify_data
+from interpret.utils import gen_name_from_class, gen_global_selector
 
 from abc import ABC, abstractmethod
 import numpy as np

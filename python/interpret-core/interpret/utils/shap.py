@@ -1,8 +1,8 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from ..api.templates import FeatureValueExplanation
-from . import gen_name_from_class, unify_data, gen_perf_dicts, gen_local_selector
+from interpret.api.templates import FeatureValueExplanation
+from interpret.utils import gen_name_from_class, unify_data, gen_perf_dicts, gen_local_selector
 
 
 def shap_explain_local(explainer, X, y=None, name=None, is_classification=False, check_additivity=True):

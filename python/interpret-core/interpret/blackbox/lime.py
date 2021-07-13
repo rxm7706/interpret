@@ -1,12 +1,12 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from ..api.base import ExplainerMixin
-from ..api.templates import FeatureValueExplanation
+from interpret.api.base import ExplainerMixin
+from interpret.api.templates import FeatureValueExplanation
 
-from ..utils import gen_name_from_class, gen_local_selector
-from ..utils import gen_perf_dicts
-from ..utils import unify_data, unify_predict_fn
+from interpret.utils import gen_name_from_class, gen_local_selector
+from interpret.utils import gen_perf_dicts
+from interpret.utils import unify_data, unify_predict_fn
 import warnings
 
 

@@ -1,8 +1,8 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from ..interactive import set_visualize_provider, get_visualize_provider
-from ...provider import PreserveProvider
+from interpret.visual.interactive import set_visualize_provider, get_visualize_provider
+from interpret.provider import PreserveProvider
 
 
 def test_provider_properties():

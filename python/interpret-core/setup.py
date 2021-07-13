@@ -1,7 +1,7 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from setuptools import setup, find_packages
+from setuptools import setup, find_namespace_packages
 from setuptools.command.sdist import sdist
 from distutils.command.build import build
 from distutils.command.install import install
@@ -201,7 +201,21 @@ setup(
         'build': BuildCommand,
         'bdist_wheel': BDistWheelCommand,
     },
-    packages=find_packages(),
+    packages=[
+        'interpret.api',
+        'interpret.blackbox',
+        'interpret.data',
+        'interpret.develop',
+        'interpret.ext',
+        'interpret.greybox',
+        'interpret.lib',
+        'interpret.perf',
+        'interpret.provider',
+        'interpret.test',
+        'interpret.utils',
+        'interpret.version',
+        'interpret.visual',
+    ],
     package_data=package_data,
     classifiers=[
         "Programming Language :: Python :: 3.6",

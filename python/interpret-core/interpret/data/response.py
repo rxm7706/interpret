@@ -1,8 +1,8 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from ..api.base import ExplainerMixin, ExplanationMixin
-from ..utils import unify_data, gen_name_from_class, gen_global_selector
+from interpret.api.base import ExplainerMixin, ExplanationMixin
+from interpret.utils import unify_data, gen_name_from_class, gen_global_selector
 
 import numpy as np
 from scipy.stats import pearsonr

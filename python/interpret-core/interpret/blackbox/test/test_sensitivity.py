@@ -1,7 +1,7 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from ..sensitivity import soft_min_max
+from interpret.blackbox.sensitivity import soft_min_max
 
 
 def test_soft_min_max():

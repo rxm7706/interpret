@@ -1,7 +1,7 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from .base import ExplanationMixin
+from interpret.api.base import ExplanationMixin
 
 
 class FeatureValueExplanation(ExplanationMixin):

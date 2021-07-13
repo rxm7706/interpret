@@ -1,11 +1,11 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from ..api.base import ExplainerMixin, ExplanationMixin
+from interpret.api.base import ExplainerMixin, ExplanationMixin
 import numpy as np
 import warnings
-from ..utils import gen_name_from_class, gen_global_selector
-from ..utils import unify_data, unify_predict_fn
+from interpret.utils import gen_name_from_class, gen_global_selector
+from interpret.utils import unify_data, unify_predict_fn
 
 
 class PartialDependence(ExplainerMixin):

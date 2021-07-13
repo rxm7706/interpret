@@ -1,7 +1,7 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
 name = "interpret-api"
 # NOTE: Versioning for interpret-api does not update step-lock with other interpret packages.
@@ -21,7 +21,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/interpretml/interpret",
-    packages=find_packages(),
+    packages=['interpret.newapi'],
     package_data={},
     classifiers=[
         "Programming Language :: Python :: 3.6",

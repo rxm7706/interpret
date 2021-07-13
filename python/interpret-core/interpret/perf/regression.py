@@ -1,8 +1,8 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from ..api.base import ExplainerMixin, ExplanationMixin
-from ..utils import unify_data, gen_name_from_class, unify_predict_fn
+from interpret.api.base import ExplainerMixin, ExplanationMixin
+from interpret.utils import unify_data, gen_name_from_class, unify_predict_fn
 
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import numpy as np

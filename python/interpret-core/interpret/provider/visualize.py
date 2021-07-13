@@ -4,10 +4,10 @@
 from abc import ABC, abstractmethod
 import logging
 
-from ..utils.environment import EnvironmentDetector, is_cloud_env
+from interpret.utils.environment import EnvironmentDetector, is_cloud_env
 from warnings import warn
 
-from ..version import __version__
+from interpret.version import __version__
 
 JS_URL = "https://unpkg.com/@interpretml/interpret-inline@{}/dist/interpret-inline.js".format(
     __version__

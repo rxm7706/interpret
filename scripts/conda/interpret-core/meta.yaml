@@ -18,9 +18,10 @@ build:
 
 requirements:
   build:
-    - gcc_linux-64  # [linux]
-    - clang  # [osx]
-    - vc  # [win]
+    # - gcc_linux-64  # [linux]
+    # - clang  # [osx]
+    # - vc  # [win]
+    - {{ compiler('cxx') }}
     - nodejs
   host:
     - pip

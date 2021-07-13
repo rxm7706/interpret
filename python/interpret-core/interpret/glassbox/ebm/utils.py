@@ -4,7 +4,7 @@
 # TODO: Test EBMUtils
 
 from math import ceil
-from .internal import NativeHelper, Native
+from interpret.glassbox.ebm.internal import NativeHelper, Native
 
 # from scipy.special import expit
 from sklearn.utils.extmath import softmax

@@ -1,7 +1,7 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from ..plot import plot_line
+from interpret.visual.plot import plot_line
 
 
 def test_plot_line_bounds_smoke():

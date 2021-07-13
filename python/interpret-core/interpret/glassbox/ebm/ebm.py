@@ -3,15 +3,15 @@
 
 
 from typing import DefaultDict
-from ...utils import gen_perf_dicts
-from .utils import EBMUtils
-from .internal import NativeHelper, Native
-from .postprocessing import multiclass_postprocess
-from ...utils import unify_data, autogen_schema, unify_vector
-from ...api.base import ExplainerMixin
-from ...api.templates import FeatureValueExplanation
-from ...provider.compute import JobLibProvider
-from ...utils import gen_name_from_class, gen_global_selector, gen_local_selector
+from interpret.utils import gen_perf_dicts
+from interpret.glassbox.ebm.utils import EBMUtils
+from interpret.glassbox.ebm.internal import NativeHelper, Native
+from interpret.glassbox.ebm.postprocessing import multiclass_postprocess
+from interpret.utils import unify_data, autogen_schema, unify_vector
+from interpret.api.base import ExplainerMixin
+from interpret.api.templates import FeatureValueExplanation
+from interpret.provider.compute import JobLibProvider
+from interpret.utils import gen_name_from_class, gen_global_selector, gen_local_selector
 import ctypes as ct
 from multiprocessing.sharedctypes import RawArray
 

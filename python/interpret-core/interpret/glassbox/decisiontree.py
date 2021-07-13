@@ -1,9 +1,9 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from ..api.base import ExplainerMixin, ExplanationMixin
-from ..utils import unify_data
-from ..utils import (
+from interpret.api.base import ExplainerMixin, ExplanationMixin
+from interpret.utils import unify_data
+from interpret.utils import (
     gen_name_from_class,
     gen_local_selector,
     gen_global_selector,

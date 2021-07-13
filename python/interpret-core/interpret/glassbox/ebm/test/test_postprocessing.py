@@ -1,9 +1,9 @@
 # Copyright (c) 2019 Microsoft Corporation
 # Distributed under the MIT software license
 
-from ..postprocessing import multiclass_postprocess
+from interpret.glassbox.ebm.postprocessing import multiclass_postprocess
 
-from ....test.utils import (
+from interpret.test.utils import (
     synthetic_multiclass,
     synthetic_classification,
     adult_classification,
@@ -15,8 +15,8 @@ from sklearn.model_selection import (
     StratifiedShuffleSplit,
     train_test_split,
 )
-from ..ebm import ExplainableBoostingRegressor, ExplainableBoostingClassifier
-from ..utils import EBMUtils
+from interpret.glassbox.ebm.ebm import ExplainableBoostingRegressor, ExplainableBoostingClassifier
+from interpret.glassbox.ebm.utils import EBMUtils
 
 import numpy as np
 
@@ -52,7 +52,7 @@ def valid_ebm(ebm):
         assert all_finite
 
 def _smoke_test_explanations(global_exp, local_exp, port):
-    from .... import preserve, show, shutdown_show_server, set_show_addr
+    from interpret.visual import preserve, show, shutdown_show_server, set_show_addr
 
     set_show_addr(("127.0.0.1", port))
 
