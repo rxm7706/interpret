@@ -227,6 +227,10 @@ jobs:
     displayName: 'Move interpret-inline.js to Python layer'
   - script: python setup.py bdist_wheel -d ../../staging
     condition: succeeded()
+    workingDirectory: 'python/interpret-api'
+    displayName: 'Build wheel (interpret-api)'
+  - script: python setup.py bdist_wheel -d ../../staging
+    condition: succeeded()
     workingDirectory: 'python/interpret-core'
     displayName: 'Build wheel (interpret-core)'
   - script: python setup.py bdist_wheel -d ../../staging
@@ -333,10 +337,19 @@ jobs:
     condition: startsWith(variables['image.name'], 'macOS')
     displayName: 'Matplotlib patch for mac.'
   # - script: python -m pip install -r dev-requirements.txt
+  - script: python -m pip install -e .
+    condition: succeeded()
+    workingDirectory: python/interpret-api
+    displayName: 'Install API requirements (Linux/Mac/Windows)'
   - script: python -m pip install -e .[required,debug,notebook,plotly,lime,sensitivity,shap,ebm,linear,decisiontree,treeinterpreter,dash,skoperules,testing]
     condition: succeeded()
     workingDirectory: python/interpret-core
     displayName: 'Install requirements (Linux/Mac/Windows)'
+  - script: |
+      set PATH=%PATH%;%GeckoWebDriver%
+      python -m pytest -vv -n auto --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
+    workingDirectory: python/interpret-api
+    displayName: 'Run pytest on API'
   - script: |
       set PATH=%PATH%;%GeckoWebDriver%
       python -m pytest -vv -n auto --runslow --runselenium --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
