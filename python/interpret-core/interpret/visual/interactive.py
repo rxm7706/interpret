@@ -11,6 +11,7 @@ this = sys.modules[__name__]
 
 this._preserve_provider = None
 this.visualize_provider = None
+this.visualizers = []
 
 
 def get_visualize_provider():
@@ -141,6 +142,16 @@ def _get_integer_key(key, explanation):
         key = series[series == key].index[0]
 
     return key
+
+
+def new_show(explanation):
+    """ Provides an interactive visualization for a given explanation(s).
+
+    Returns:
+        None.
+    """
+    # Register explanation to service
+    # Render JS component with route
 
 
 def show(explanation, key=-1, **kwargs):

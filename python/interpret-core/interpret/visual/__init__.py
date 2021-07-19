@@ -2,6 +2,7 @@
 # Distributed under the MIT software license
 
 from interpret.visual.interactive import (  # noqa: F401
+    new_show,
     show,
     show_link,
     set_show_addr,
