@@ -76,3 +76,6 @@ def test_explanation():
     assert actual.feature_names == 'f1'
     assert actual.units == 'logits'
     assert actual.base_values == 0
+
+    components = actual._components()
+    assert actual.values == components[Attribution].fields["values"]

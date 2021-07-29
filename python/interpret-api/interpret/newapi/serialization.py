@@ -21,7 +21,7 @@ class ExplanationJSONEncoder(JSONEncoder):
                 "_type": "explanation",
                 "module": o.__class__.__module__,
                 "class": o.__class__.__name__,
-                "components": list(o.components.values()),
+                "components": list(o._components().values()),
             }
         elif isinstance(o, Component):
             return {
