@@ -27,7 +27,7 @@ class Explanation:
 
     def __getattr__(self, item):
         if item.startswith("_"):  # Protected attribute
-            return super(Explanation, self).__getattr__(item)
+            return super(Explanation, self).__getattribute__(item)
         else:  # Public attribute
             return self._slicer.__getattr__(item)
 
@@ -55,24 +55,25 @@ class Explanation:
         return item in self._component_fields_map.keys()
 
     def __repr__(self):
-        record = self._components().copy()
+        # NOTE: Consider using slicer iterator as opposed to switching for dim, object, alias.
+        components = self._components()
         fields = []
         shape_str = f"shape: {self.shape}"
         fields.append(shape_str)
         fields.append("-" * len(shape_str))
-        for record_key, record_val in record.items():
-            for field_name, field_val in record_val.fields.items():
+        for _, component in components.items():
+            for field_name, field_val in component.fields.items():
                 field_value = str(self.__getattr__(field_name))
 
-                if field_name in self._dims:
+                if field_name in self._slicer._dims:
                     field_value_str = f"Dim\t{field_name} = {field_value}"
                 else:
-                    if field_name in self._objects:
+                    if field_name in self._slicer._objects:
                         field_type = 'O'
-                        field_dim = ','.join(str(x) for x in self._objects[field_name].dim)
+                        field_dim = ','.join(str(x) for x in self._slicer._objects[field_name].dim)
                     else:
                         field_type = 'A'
-                        field_dim = ','.join(str(x) for x in self._aliases[field_name].dim)
+                        field_dim = ','.join(str(x) for x in self._slicer._aliases[field_name].dim)
                     field_value_str = f"{field_type}{{{field_dim}}}\t{field_name} = {field_value}"
 
                 if len(field_value_str) > 60:

@@ -79,3 +79,7 @@ def test_explanation():
 
     components = actual._components()
     assert actual.values == components[Attribution].fields["values"]
+
+    # Test print
+    str_output = expl.__repr__()
+    assert str_output is not None
