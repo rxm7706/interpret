@@ -1,0 +1,46 @@
+{
+    "$schema": "https://json-schema.org/draft/2019-09/schema",
+    "type": "object",
+    "properties": {
+        "version": {
+            "type": "array",
+            "items": [
+            {
+                "type": "number",
+                "minimum": 1
+            },
+            {
+                "type": "number",
+                "minimum": 0
+            },
+            {
+                "type": "number",
+                "minimum": 0
+            }
+            ],
+            "minItems": 3,
+            "maxItems": 3
+        },
+        "learner": {
+            "type": "object",
+            "properties": {
+                "feature_names": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "feature_types": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    },
+    "required": [
+        "version",
+        "learner"
+    ]
+}
