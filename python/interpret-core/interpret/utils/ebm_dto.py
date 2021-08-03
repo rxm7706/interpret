@@ -1,7 +1,10 @@
 import json
+from interpret.utils.serialization import from_json
+from jsonschema import validate
 import pkg_resources
+import os
 
-from ..glassbox.ebm.ebm import (BaseCoreEBM, EBMExplanation, 
+from ..glassbox.ebm.ebm import (BaseCoreEBM, EBMExplanation,
     ExplainableBoostingClassifier, EBMPreprocessor)
 
 
@@ -18,7 +21,7 @@ class LearnerDTO:
         )
 
     def __hash__(self):
-        return hash((tuple(self.feature_names), 
+        return hash((tuple(self.feature_names),
             tuple(self.feature_types)))
 
     @classmethod
@@ -39,8 +42,8 @@ class EBMDTO:
         )
 
     def __hash__(self):
-        return hash((tuple(self.version), 
-            self.learner)) 
+        return hash((tuple(self.version),
+            self.learner))
 
     def to_ebm(self):
         raise NotImplementedError
@@ -53,18 +56,26 @@ class EBMDTO:
     def from_ebm(cls, ebm):
         version = None
         learner = None
-        
+
         if ebm is not None:
-            version = list(map(int, 
+            version = list(map(int,
                 pkg_resources.get_distribution("interpret-core").version.split('.')))
             learner = LearnerDTO(ebm.feature_names, ebm.feature_types)
         return cls(version, learner)
 
     @classmethod
-    def from_json(cls, data):
-        version = data["version"]
-        learner = LearnerDTO.from_json(data["learner"])
+    def from_json(cls, json_dict):
+        version = json_dict["version"]
+        learner = LearnerDTO.from_json(json_dict["learner"])
         return cls(version, learner)
 
+    @classmethod
+    def load_json(cls, json_str):
+        json_dict = json.loads(json_str)
 
+        cur_dir = os.path.dirname(__file__)
+        with open(os.path.join(cur_dir, 'ebm.schema.json')) as json_file:
+            schema = json.load(json_file)
+            validate(instance=json_dict, schema=schema)
 
+        return EBMDTO.from_json(json_dict)

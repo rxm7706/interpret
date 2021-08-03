@@ -1,10 +1,16 @@
+import json
+
 from ...glassbox.ebm.ebm import ExplainableBoostingClassifier
 from ...glassbox.ebm.test.test_ebm import _smoke_test_explanations
 from ...test.utils import adult_classification
 from ..serialization import from_json, to_json
+from ..ebm_dto import EBMDTO
 
+from jsonschema import validate
 import numpy as np
 import os
+import pandas as pd
+from sklearn.model_selection import train_test_split
 
 # This will be removed later
 def inspect_object(object, file_name):
@@ -60,3 +66,99 @@ def test_classification_serialization():
 
     inspect_object(global_exp, "global_exp.txt")
     inspect_object(global_exp_from_json, "new_global_exp.txt")
+
+def test_dto_to_json():
+    df = pd.read_csv(
+    "https://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/breast-cancer-wisconsin.data",
+    header=None)
+
+    df.columns = [
+        "sample_code_number", "clump_thickness", "uniformity_of_cell_size", "uniformity_of_cell_shape",
+        "marginal_adhesion", "single_epithelial_cell_size", "bare_nuclei", "bland_chromatin",
+        "normal_nucleoli", "mitoses", "class"
+    ]
+
+    # drop any rows that have missing values
+    df = df[~df.eq('?').any(1)]
+
+    # force bare_nuclei column to int64 data type after dropping '?' values
+    df['bare_nuclei'] = df['bare_nuclei'].astype(str).astype(int)
+
+    #print(df.head(n=10).to_string(index=False))
+
+    train_cols = df.columns[1:-1]
+    label = df.columns[-1]
+    X = df[train_cols]
+    y = df[label].apply(lambda x: 0 if x == 2 else 1)
+
+    seed = 1
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=seed)
+
+    ebm = ExplainableBoostingClassifier(random_state=seed, n_jobs=-1, interactions=0)
+    ebm.fit(X_train, y_train)   #Works on dataframes and numpy arrays
+
+    ebm_dto_orig = EBMDTO.from_ebm(ebm)
+    json_str = ebm_dto_orig.to_json()
+    ebm_dto_deserialized = EBMDTO.load_json(json_str)
+    assert(ebm_dto_orig == ebm_dto_deserialized)
+
+def test_json_schema_validation():
+    schema_str = \
+    '{ \
+        "$schema": "https://json-schema.org/draft/2019-09/schema", \
+        "type": "object", \
+        "properties": { \
+            "version": { \
+                "type": "array", \
+                "items": [ \
+                { \
+                    "type": "number", \
+                    "minimum": 0 \
+                }, \
+                { \
+                    "type": "number", \
+                    "minimum": 0 \
+                }, \
+                { \
+                    "type": "number", \
+                    "minimum": 0 \
+                } \
+                ], \
+                "minItems": 3, \
+                "maxItems": 3 \
+            }, \
+            "learner": { \
+                "type": "object", \
+                "properties": { \
+                    "feature_names": { \
+                        "type": "array", \
+                        "items": { \
+                            "type": "string" \
+                        } \
+                    }, \
+                    "feature_types": { \
+                        "type": "array", \
+                        "items": { \
+                            "type": "string" \
+                        } \
+                    } \
+                } \
+            } \
+        }, \
+        "required": [ \
+            "version", \
+            "learner" \
+        ] \
+    }'
+
+    schema = json.loads(schema_str)
+    myjson = {
+        'learner': {
+            'feature_names': ['Hola', 'mundo'],
+            'feature_types': ['continuous', 'continuous]']
+        },
+        'version': [0, 2, 6]
+    }
+
+    validate(myjson, schema)
+
