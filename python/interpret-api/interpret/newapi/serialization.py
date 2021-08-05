@@ -21,7 +21,7 @@ class ExplanationJSONEncoder(JSONEncoder):
                 "_type": "explanation",
                 "module": o.__class__.__module__,
                 "class": o.__class__.__name__,
-                "components": list(o._components().values()),
+                "components": {f"{v.__class__.__module__}.{v.__class__.__name__}": v for _, v in o._components().items()},
             }
         elif isinstance(o, Component):
             return {
@@ -63,7 +63,7 @@ class ExplanationJSONDecoder(JSONDecoder):
             return np.array(obj["value"])
         elif _type == "explanation":
             cls = getattr(import_module(obj["module"]), obj["class"])
-            return cls.from_components(obj["components"])
+            return cls.from_components(list(obj["components"].values()))
         elif _type == "component":
             cls = getattr(import_module(obj["module"]), obj["class"])
             return cls.from_fields(obj["fields"])
