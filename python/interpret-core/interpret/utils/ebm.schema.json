@@ -33,7 +33,105 @@
                 "feature_types": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "string",
+                        "enum": ["continuous", "categorical"]
+                    }
+                },
+                "interpretable_ebm": {
+                    "type": "object",
+                    "properties": {
+                        "task" : {
+                            "oneOf": [
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": { "const": "regression" }
+                                    }
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": { "const": "classification" },
+                                        "classes": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "number"
+                                            },
+                                            "minItems": 2
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        "intercept" : { "type": "number" },
+                        "additive_terms": {
+                            "type": "array",
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "type": "number"
+                                }
+                            }
+                        },
+                        "standard_deviations": {
+                            "type": "array",
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "type": "number"
+                                }
+                            }
+                        },
+                        "feature_groups": {
+                            "type": "object",
+                            "properties": {
+                                "groups": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "number"
+                                        }
+                                    }
+                                },
+                                "importances": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "number"
+                                    }
+                                },
+                                "mins": {
+                                    "type": "object",
+                                    "patternProperties": {
+                                        "^[0-9]*$": {
+                                            "type": "number"
+                                        }
+                                    },
+                                    "additionalProperties": false
+                                },
+                                "maxes": {
+                                    "type": "object",
+                                    "patternProperties": {
+                                        "^[0-9]*$": {
+                                            "type": "number"
+                                        }
+                                    },
+                                    "additionalProperties": false
+                                },
+                                "bin_edges": {
+                                    "type": "object",
+                                    "patternProperties": {
+                                        "^[0-9]*$": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "number"
+                                            }
+                                        }
+                                    },
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
                     }
                 }
             }

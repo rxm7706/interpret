@@ -96,6 +96,7 @@ def test_dto_to_json():
 
     ebm = ExplainableBoostingClassifier(random_state=seed, n_jobs=-1, interactions=0)
     ebm.fit(X_train, y_train)   #Works on dataframes and numpy arrays
+    ebm.predict(X_test)
 
     ebm_dto_orig = EBMDTO.from_ebm(ebm)
     json_str = ebm_dto_orig.to_json()
@@ -139,7 +140,8 @@ def test_json_schema_validation():
                     "feature_types": { \
                         "type": "array", \
                         "items": { \
-                            "type": "string" \
+                            "type": "string", \
+                            "enum": ["continuous", "categorical"] \
                         } \
                     } \
                 } \
@@ -155,7 +157,7 @@ def test_json_schema_validation():
     myjson = {
         'learner': {
             'feature_names': ['Hola', 'mundo'],
-            'feature_types': ['continuous', 'continuous]']
+            'feature_types': ['continuous', 'continuous']
         },
         'version': [0, 2, 6]
     }
