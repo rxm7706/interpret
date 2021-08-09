@@ -94,14 +94,23 @@ def test_dto_to_json():
     seed = 1
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=seed)
 
-    ebm = ExplainableBoostingClassifier(random_state=seed, n_jobs=-1, interactions=0)
-    ebm.fit(X_train, y_train)   #Works on dataframes and numpy arrays
-    ebm.predict(X_test)
+    ebm_orig = ExplainableBoostingClassifier(random_state=seed, n_jobs=-1, interactions=0)
+    ebm_orig.fit(X_train, y_train)   #Works on dataframes and numpy arrays
+    ebm_orig_predictions = ebm_orig.predict(X_test)
+    ebm_orig_probabilities = ebm_orig.predict_proba(X_test)
 
-    ebm_dto_orig = EBMDTO.from_ebm(ebm)
+    ebm_dto_orig = EBMDTO.from_ebm(ebm_orig)
     json_str = ebm_dto_orig.to_json()
     ebm_dto_deserialized = EBMDTO.load_json(json_str)
     assert(ebm_dto_orig == ebm_dto_deserialized)
+
+    ebm_deserialized = ebm_dto_deserialized.to_ebm()
+    ebm_deserialized_predictions = ebm_deserialized.predict(X_test)
+    ebm_deserialized_probabilities = ebm_deserialized.predict_proba(X_test)
+
+    assert np.array_equal(ebm_orig_predictions, ebm_deserialized_predictions)
+    assert np.array_equal(ebm_orig_probabilities, ebm_deserialized_probabilities)
+
 
 def test_json_schema_validation():
     schema_str = \

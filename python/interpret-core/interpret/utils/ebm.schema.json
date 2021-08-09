@@ -82,6 +82,11 @@
                                 }
                             }
                         },
+                        "interactions": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 0
+                        },
                         "feature_groups": {
                             "type": "object",
                             "properties": {

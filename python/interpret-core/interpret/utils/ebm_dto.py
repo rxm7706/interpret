@@ -1,6 +1,7 @@
 import json
 from interpret.utils.serialization import from_json
 from jsonschema import validate
+import numpy as np
 import pkg_resources
 import os
 
@@ -44,12 +45,13 @@ class RegressionTaskDTO:
         return cls()
 
 class InterpretableEBMDTO:
-    def __init__(self, task, intercept, additive_terms, standard_devations,
-        feature_groups):
+    def __init__(self, task, intercept, additive_terms, standard_deviations,
+        interactions, feature_groups):
         self.task = task
         self.intercept = intercept
         self.additive_terms = additive_terms
-        self.standard_deviations = standard_devations
+        self.standard_deviations = standard_deviations
+        self.interactions = interactions
         self.feature_groups = feature_groups
 
     def __eq__(self, other):
@@ -59,6 +61,7 @@ class InterpretableEBMDTO:
             self.intercept == other.intercept and
             self.additive_terms == other.additive_terms and
             self.standard_deviations == self.standard_deviations and
+            self.interactions == self.interactions and
             self.feature_groups == other.feature_groups
         )
 
@@ -71,6 +74,7 @@ class InterpretableEBMDTO:
             self.intercept,
             hashable_additive_terms,
             hashable_standard_deviations,
+            self.interactions,
             self.feature_groups
         )
 
@@ -91,6 +95,7 @@ class InterpretableEBMDTO:
             json_dict["intercept"],
             json_dict["additive_terms"],
             json_dict["standard_deviations"],
+            json_dict["interactions"],
             feature_groups)
 
 class FeatureGroupDTO:
@@ -178,7 +183,54 @@ class EBMDTO:
             self.learner))
 
     def to_ebm(self):
-        raise NotImplementedError
+        ebm = None
+        classes = None
+
+        if type(self.learner.interpretable_ebm.task) == ClassificationTaskDTO:
+            # BUGBUG: This initializes the object with a bunch of default meta
+            # params that haven't yet been serialized
+            ebm = ExplainableBoostingClassifier()
+            classes = np.array(self.learner.interpretable_ebm.task.classes)
+        else:
+            ebm = ExplainableBoostingRegressor()
+
+        additive_terms = list(
+            map(lambda a: np.array(a),
+                self.learner.interpretable_ebm.additive_terms)
+        )
+        standard_deviations = list(
+            map(lambda a: np.array(a),
+                self.learner.interpretable_ebm.standard_deviations))
+
+        ebm.additive_terms_ = additive_terms
+        ebm.classes_ = classes
+        ebm.feature_names = self.learner.feature_names
+        ebm.feature_types = self.learner.feature_types
+        ebm.feature_groups_ = self.learner.interpretable_ebm.feature_groups.groups
+        ebm.feature_importances_ = list(
+            map(lambda i: np.float64(i),
+                self.learner.interpretable_ebm.feature_groups.importances)
+        )
+        ebm.interactions = self.learner.interpretable_ebm.interactions
+        ebm.intercept_ = np.array([self.learner.interpretable_ebm.intercept])
+        ebm.term_standard_deviations_ = standard_deviations
+
+        col_bin_edges = {
+            k: np.array(v) for k, v
+            in self.learner.interpretable_ebm.feature_groups.bin_edges.items()
+        }
+
+        ebm.preprocessor_ = EBMPreprocessor(self.learner.feature_names,
+            self.learner.feature_types)
+        ebm.preprocessor_.col_bin_edges_ = col_bin_edges
+        ebm.preprocessor_.col_max_ = self.learner.interpretable_ebm.feature_groups.maxes
+        ebm.preprocessor_.col_min_ = self.learner.interpretable_ebm.feature_groups.mins
+        ebm.preprocessor_.col_types_ = self.learner.feature_types
+
+        ebm.preprocessor_.has_fitted_ = True
+        ebm.has_fitted_ = True
+
+        return ebm
 
     def to_json(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True)
@@ -202,6 +254,7 @@ class EBMDTO:
             intercept = ebm.intercept_[0].item()
             additive_terms = list(map(lambda a: a.tolist(), ebm.additive_terms_))
             standard_deviations = list(map(lambda a: a.tolist(), ebm.term_standard_deviations_))
+            interactions = ebm.interactions
 
             feature_groups_groups = ebm.feature_groups_
             feature_groups_importances = list(map(lambda i: i.item(), ebm.feature_importances_))
@@ -224,6 +277,7 @@ class EBMDTO:
                 intercept,
                 additive_terms,
                 standard_deviations,
+                interactions,
                 feature_groups
             )
 
