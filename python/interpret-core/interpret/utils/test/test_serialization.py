@@ -98,6 +98,7 @@ def test_dto_to_json():
     ebm_orig.fit(X_train, y_train)   #Works on dataframes and numpy arrays
     ebm_orig_predictions = ebm_orig.predict(X_test)
     ebm_orig_probabilities = ebm_orig.predict_proba(X_test)
+    ebm_orig_global = ebm_orig.explain_global(name='EBM')
 
     ebm_dto_orig = EBMDTO.from_ebm(ebm_orig)
     json_str = ebm_dto_orig.to_json()
@@ -110,6 +111,9 @@ def test_dto_to_json():
 
     assert np.array_equal(ebm_orig_predictions, ebm_deserialized_predictions)
     assert np.array_equal(ebm_orig_probabilities, ebm_deserialized_probabilities)
+
+    ebm_deserialized_global = ebm_deserialized.explain_global(name='EBM')
+    _smoke_test_explanations(ebm_deserialized_global, None, 6000)
 
 
 def test_json_schema_validation():

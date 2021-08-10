@@ -2,6 +2,7 @@ import json
 from interpret.utils.serialization import from_json
 from jsonschema import validate
 import numpy as np
+from numpy.lib.histograms import histogram_bin_edges
 import pkg_resources
 import os
 
@@ -66,8 +67,8 @@ class InterpretableEBMDTO:
         )
 
     def __hash__(self):
-        hashable_additive_terms = tuple((lambda l: tuple(l), self.additive_terms))
-        hashable_standard_deviations = tuple((lambda l: tuple(l), self.standard_deviations))
+        hashable_additive_terms = tuple(map(tuple, self.additive_terms))
+        hashable_standard_deviations = tuple(map(tuple, self.standard_deviations))
 
         return hash(
             self.task,
@@ -99,12 +100,16 @@ class InterpretableEBMDTO:
             feature_groups)
 
 class FeatureGroupDTO:
-    def __init__(self, groups, importances, mins, maxes, bin_edges):
+    def __init__(self, groups, importances, mins, maxes, bin_edges, hist_edges,
+        hist_counts):
         self.groups = groups
         self.importances = importances
         self.mins = mins
         self.maxes = maxes
         self.bin_edges = bin_edges
+        self.hist_edges = hist_edges
+        self.hist_counts = hist_counts
+
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and \
@@ -112,16 +117,22 @@ class FeatureGroupDTO:
             self.importances == other.importances and \
             self.mins == other.mins and \
             self.maxes == other.maxes and \
-            self.bin_edges == other.bin_edges
+            self.bin_edges == other.bin_edges and \
+            self.hist_edges == other.hist_edges and \
+            self.hist_counts == other.hist_counts
 
     def __hash__(self):
-        hashable_bin_edges = tuple((lambda l: tuple(l), self.bin_edges))
+        hashable_bin_edges = tuple(map(tuple, self.bin_edges))
+        hashable_hist_edges = tuple(map(tuple, self.hist_edges))
+        hashable_hist_counts = tuple(map(tuple, self.hist_counts))
 
         return hash((tuple(self.groups),
             tuple(self.importances),
             tuple(self.mins),
             tuple(self.maxes),
-            tuple(hashable_bin_edges)))
+            hashable_bin_edges,
+            hashable_hist_edges,
+            hashable_hist_counts))
 
     @classmethod
     def from_json(cls, json_dict):
@@ -134,13 +145,21 @@ class FeatureGroupDTO:
         bin_edges = {
             int(k): v for k, v in json_dict["bin_edges"].items()
         }
+        hist_edges = {
+            int(k): v for k, v in json_dict["hist_edges"].items()
+        }
+        hist_counts = {
+            int(k): v for k, v in json_dict["hist_counts"].items()
+        }
 
         return cls(
             json_dict["groups"],
             json_dict["importances"],
             mins,
             maxes,
-            bin_edges)
+            bin_edges,
+            hist_edges,
+            hist_counts)
 
 class LearnerDTO:
     def __init__(self, feature_names, feature_types, interpretable_ebm):
@@ -220,12 +239,24 @@ class EBMDTO:
             in self.learner.interpretable_ebm.feature_groups.bin_edges.items()
         }
 
+        hist_edges = {
+            k: np.array(v) for k, v
+            in self.learner.interpretable_ebm.feature_groups.hist_edges.items()
+        }
+
+        hist_counts = {
+            k: np.array(v) for k, v
+            in self.learner.interpretable_ebm.feature_groups.hist_counts.items()
+        }
+
         ebm.preprocessor_ = EBMPreprocessor(self.learner.feature_names,
             self.learner.feature_types)
         ebm.preprocessor_.col_bin_edges_ = col_bin_edges
         ebm.preprocessor_.col_max_ = self.learner.interpretable_ebm.feature_groups.maxes
         ebm.preprocessor_.col_min_ = self.learner.interpretable_ebm.feature_groups.mins
         ebm.preprocessor_.col_types_ = self.learner.feature_types
+        ebm.preprocessor_.hist_edges_ = hist_edges
+        ebm.preprocessor_.hist_counts_ = hist_counts
 
         ebm.preprocessor_.has_fitted_ = True
         ebm.has_fitted_ = True
@@ -263,13 +294,21 @@ class EBMDTO:
             feature_groups_bin_edges = {
                 k: v.tolist() for k, v in ebm.preprocessor_.col_bin_edges_.items()
             }
+            feature_groups_hist_edges = {
+                k: v.tolist() for k, v in ebm.preprocessor_.hist_edges_.items()
+            }
+            feature_groups_hist_counts = {
+                k: v.tolist() for k, v in ebm.preprocessor_.hist_counts_.items()
+            }
 
             feature_groups = FeatureGroupDTO(
                 feature_groups_groups,
                 feature_groups_importances,
                 feature_groups_mins,
                 feature_groups_maxes,
-                feature_groups_bin_edges
+                feature_groups_bin_edges,
+                feature_groups_hist_edges,
+                feature_groups_hist_counts
             )
 
             interpretable_ebm = InterpretableEBMDTO(

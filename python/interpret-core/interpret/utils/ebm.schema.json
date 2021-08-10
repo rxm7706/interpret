@@ -134,6 +134,30 @@
                                         }
                                     },
                                     "additionalProperties": false
+                                },
+                                "hist_edges": {
+                                    "type": "object",
+                                    "patternProperties": {
+                                        "^[0-9]*$": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "number"
+                                            }
+                                        }
+                                    },
+                                    "additionalProperties": false
+                                },
+                                "hist_counts": {
+                                    "type": "object",
+                                    "patternProperties": {
+                                        "^[0-9]*$": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "number"
+                                            }
+                                        }
+                                    },
+                                    "additionalProperties": false
                                 }
                             }
                         }
