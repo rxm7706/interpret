@@ -221,16 +221,16 @@ def test_ebm_synthetic_classification():
     valid_ebm(clf)
 
 
-def _smoke_test_explanations(global_exp, local_exp, port):
+def _smoke_test_explanations(global_exp, local_exp=None, port=6000):
     from .... import preserve, show, shutdown_show_server, set_show_addr
 
     set_show_addr(("127.0.0.1", port))
 
     # Smoke test: should run without crashing.
     preserve(global_exp)
-    preserve(local_exp)
+    if local_exp is not None: preserve(local_exp)
     show(global_exp)
-    show(local_exp)
+    if local_exp is not None: show(local_exp)
 
     # Check all features for global (including interactions).
     for selector_key in global_exp.selector[global_exp.selector.columns[0]]:

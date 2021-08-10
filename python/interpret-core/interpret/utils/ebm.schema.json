@@ -1,4 +1,5 @@
 {
+    "$id": "https://interpret.ml/schemas/ebm",
     "$schema": "https://json-schema.org/draft/2019-09/schema",
     "type": "object",
     "properties": {
@@ -24,17 +25,10 @@
         "learner": {
             "type": "object",
             "properties": {
-                "feature_names": {
+                "features": {
                     "type": "array",
                     "items": {
-                        "type": "string"
-                    }
-                },
-                "feature_types": {
-                    "type": "array",
-                    "items": {
-                        "type": "string",
-                        "enum": ["continuous", "categorical"]
+                        "$ref": "#/definitions/feature"
                     }
                 },
                 "interpretable_ebm": {
@@ -169,5 +163,17 @@
     "required": [
         "version",
         "learner"
-    ]
+    ],
+    "definitions": {
+        "feature": {
+            "type": "object",
+            "properties": {
+                "name": { "type" : "string" },
+                "type": { "type" : "string" },
+                "num_unique": { "type" : "number" },
+                "percent_non_zero": { "type" : "number" }
+            },
+            "required": ["name", "type", "num_unique", "percent_non_zero"]
+        }
+    }
 }

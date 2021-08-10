@@ -3,6 +3,7 @@ from interpret.utils.serialization import from_json
 from jsonschema import validate
 import numpy as np
 from numpy.lib.histograms import histogram_bin_edges
+import pandas as pd
 import pkg_resources
 import os
 
@@ -44,6 +45,45 @@ class RegressionTaskDTO:
     @classmethod
     def from_json(cls, json_dict):
         return cls()
+
+class FeatureDTO:
+    def __init__(self, name, type, num_unique, percent_non_zero):
+        self.name = name
+        self.type = type
+        self.num_unique = num_unique
+        self.percent_non_zero = percent_non_zero
+
+    def __eq__(self, other):
+        return (
+            self.__class__ == other.__class__ and
+            self.name == other.name and
+            self.type == other.type and
+            self.num_unique == other.num_unique and
+            self.percent_non_zero == other.percent_non_zero)
+
+    def __hash__(self):
+        return hash(
+            self.name,
+            self.type,
+            self.num_unique,
+            self.percent_non_zero
+        )
+
+    @classmethod
+    def gen_global_selector(self, feature_dtos):
+        records = []
+
+        for feature_dto in feature_dtos:
+            record = {}
+            record["Name"] = feature_dto.name
+            record["Type"] = feature_dto.type
+            record["# Unique"] = feature_dto.num_unique
+            record["% Non-zero"] = feature_dto.percent_non_zero
+            records.append(record)
+
+        columns = ["Name", "Type", "# Unique", "% Non-zero"]
+        df = pd.DataFrame.from_records(records, columns=columns)
+        return df
 
 class InterpretableEBMDTO:
     def __init__(self, task, intercept, additive_terms, standard_deviations,
@@ -162,28 +202,29 @@ class FeatureGroupDTO:
             hist_counts)
 
 class LearnerDTO:
-    def __init__(self, feature_names, feature_types, interpretable_ebm):
-        self.feature_names = feature_names
-        self.feature_types = feature_types
+    def __init__(self, features, interpretable_ebm):
+        self.features = features
         self.interpretable_ebm = interpretable_ebm
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and \
-            self.feature_names == other.feature_names and \
-            self.feature_types == other.feature_types and \
+            self.features == other.features and \
             self.interpretable_ebm == other.interpretable_ebm
 
     def __hash__(self):
-        return hash((tuple(self.feature_names),
-            tuple(self.feature_types),
+        return hash((tuple(self.features),
             self.interpretable_ebm))
 
     @classmethod
     def from_json(cls, json_dict):
-        feature_names = json_dict["feature_names"]
-        feature_types = json_dict["feature_types"]
+        features = []
+        for feature_dict in json_dict["features"]:
+            feature_dto = FeatureDTO(feature_dict["name"], feature_dict["type"],
+                feature_dict["num_unique"], feature_dict["percent_non_zero"])
+            features.append(feature_dto)
+
         intepretable_ebm = InterpretableEBMDTO.from_json(json_dict["interpretable_ebm"])
-        return cls(feature_names, feature_types, intepretable_ebm)
+        return cls(features, intepretable_ebm)
 
 class EBMDTO:
     def __init__(self, version, learner):
@@ -223,13 +264,14 @@ class EBMDTO:
 
         ebm.additive_terms_ = additive_terms
         ebm.classes_ = classes
-        ebm.feature_names = self.learner.feature_names
-        ebm.feature_types = self.learner.feature_types
+        ebm.feature_names = [fdto.name for fdto in self.learner.features]
+        ebm.feature_types = [fdto.type for fdto in self.learner.features]
         ebm.feature_groups_ = self.learner.interpretable_ebm.feature_groups.groups
         ebm.feature_importances_ = list(
             map(lambda i: np.float64(i),
                 self.learner.interpretable_ebm.feature_groups.importances)
         )
+        ebm.global_selector = FeatureDTO.gen_global_selector(self.learner.features)
         ebm.interactions = self.learner.interpretable_ebm.interactions
         ebm.intercept_ = np.array([self.learner.interpretable_ebm.intercept])
         ebm.term_standard_deviations_ = standard_deviations
@@ -249,12 +291,11 @@ class EBMDTO:
             in self.learner.interpretable_ebm.feature_groups.hist_counts.items()
         }
 
-        ebm.preprocessor_ = EBMPreprocessor(self.learner.feature_names,
-            self.learner.feature_types)
+        ebm.preprocessor_ = EBMPreprocessor(ebm.feature_names, ebm.feature_types)
         ebm.preprocessor_.col_bin_edges_ = col_bin_edges
         ebm.preprocessor_.col_max_ = self.learner.interpretable_ebm.feature_groups.maxes
         ebm.preprocessor_.col_min_ = self.learner.interpretable_ebm.feature_groups.mins
-        ebm.preprocessor_.col_types_ = self.learner.feature_types
+        ebm.preprocessor_.col_types_ = ebm.feature_types
         ebm.preprocessor_.hist_edges_ = hist_edges
         ebm.preprocessor_.hist_counts_ = hist_counts
 
@@ -275,6 +316,11 @@ class EBMDTO:
         if ebm is not None:
             version = list(map(int,
                 pkg_resources.get_distribution("interpret-core").version.split('.')))
+
+            feature_dtos = []
+            for _, row in ebm.global_selector.iterrows():
+                feature_dtos.append(FeatureDTO(row["Name"], row["Type"],
+                    row["# Unique"], row["% Non-zero"]))
 
             task = None
             if type(ebm) is ExplainableBoostingClassifier:
@@ -320,7 +366,7 @@ class EBMDTO:
                 feature_groups
             )
 
-            learner = LearnerDTO(ebm.feature_names, ebm.feature_types, interpretable_ebm)
+            learner = LearnerDTO(feature_dtos, interpretable_ebm)
 
         return cls(version, learner)
 

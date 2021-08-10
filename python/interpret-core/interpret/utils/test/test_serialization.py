@@ -67,6 +67,7 @@ def test_classification_serialization():
     inspect_object(global_exp, "global_exp.txt")
     inspect_object(global_exp_from_json, "new_global_exp.txt")
 
+
 def test_dto_to_json():
     df = pd.read_csv(
     "https://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/breast-cancer-wisconsin.data",
@@ -113,7 +114,7 @@ def test_dto_to_json():
     assert np.array_equal(ebm_orig_probabilities, ebm_deserialized_probabilities)
 
     ebm_deserialized_global = ebm_deserialized.explain_global(name='EBM')
-    _smoke_test_explanations(ebm_deserialized_global, None, 6000)
+    _smoke_test_explanations(ebm_deserialized_global)
 
 
 def test_json_schema_validation():
