@@ -131,6 +131,29 @@ typedef struct _InteractionHandle {
 // std::numeric_limits<FloatEbmType>::quiet_NaN()
 #define FLOAT_EBM_NAN            (STATIC_CAST(FloatEbmType, (NAN)))
 
+// Smaller integers can safely roundtrip to double values and back, but this breaks down at
+// exactly 2^53.  2^53 will convert from an integer to a correct double, but 2^53 + 1 will round
+// down to 2^53 in IEEE-754 where banker's rounding is used.  So, if we see an integer with 
+// 9007199254740992 we would be safe to convert to to a double, BUT if we see a double of
+// 9007199254740992.0 we don't know if that was originally 9007199254740992 or 9007199254740993, so
+// 9007199254740992 is unsafe if checking as a double.
+// https://stackoverflow.com/questions/1848700/biggest-integer-that-can-be-stored-in-a-double
+// R has a lower maximum index of 4503599627370496 (R_XLEN_T_MAX) probably to store a bit somewhere.
+#define SAFE_FLOAT64_AS_INT_MAX   9007199254740991
+// the maximum signed int64 value is 9223372036854775807, BUT numbers above 9223372036854775295 round in IEEE-754
+// to a number above that, so if we're converting from float64 to int64, the maximum safe number is 9223372036854775295
+// But when we convert 9223372036854775295 to float64 we loose precision and if we output it with 17 decimal digits
+// which is the universal round trip format for float64 in IEEE-754, then we get 9.2233720368547748e+18
+// When you accurately round that biggest representable float64 to the closest integer, you get 9223372036854774784,
+// which having 19 digits is legal as an exact IEEE-754 number since it's within the 17-20 digits that is required
+// to accurately round to idenical floats
+#define FLOAT64_TO_INT_MAX   9223372036854774784
+
+// TODO: look through our code for places where SAFE_FLOAT64_AS_INT_MAX or FLOAT64_TO_INT_MAX would be useful
+
+// TODO: we can eliminate FloatEbmType and make our interface entirely doubles.  JSON only supports doubles, and it's
+// the most cross-language and highest precision type commonly available.  We can move FloatEbmType into our
+// internal interface and use it to switch our score representation which is the only place we'd benefit from float32
 typedef double FloatEbmType;
 // this needs to be in "le" format, since we internally use that format to generate "interpretable" 
 // floating point numbers in text format.   See Discretization.cpp for details.
@@ -156,25 +179,24 @@ typedef uint64_t UGenerateUpdateOptionsType;
 #define EBM_TRUE           (EBM_BOOL_CAST(1))
 
 #define Error_None                                 (EBM_ERROR_CAST(0))
-// reserve the return code 1 as illegal, since 1 is often "TRUE"
-#define Error_OutOfMemory                          (EBM_ERROR_CAST(2))
+#define Error_OutOfMemory                          (EBM_ERROR_CAST(-1))
 // errors occuring entirely within the C/C++ code
-#define Error_UnexpectedInternal                   (EBM_ERROR_CAST(3))
+#define Error_UnexpectedInternal                   (EBM_ERROR_CAST(-2))
 // input parameters received that are clearly due to bugs in the higher level caller
-#define Error_IllegalParamValue                    (EBM_ERROR_CAST(4))
+#define Error_IllegalParamValue                    (EBM_ERROR_CAST(-3))
 // input parameters received from the end user that are illegal.  These should have been filtered by our caller
-#define Error_UserParamValue                       (EBM_ERROR_CAST(5))
-#define Error_ThreadStartFailed                    (EBM_ERROR_CAST(6))
+#define Error_UserParamValue                       (EBM_ERROR_CAST(-4))
+#define Error_ThreadStartFailed                    (EBM_ERROR_CAST(-5))
 
-#define Error_LossConstructorException             (EBM_ERROR_CAST(10))
-#define Error_LossParamUnknown                     (EBM_ERROR_CAST(11))
-#define Error_LossParamValueMalformed              (EBM_ERROR_CAST(12))
-#define Error_LossParamValueOutOfRange             (EBM_ERROR_CAST(13))
-#define Error_LossParamMismatchWithConfig          (EBM_ERROR_CAST(14))
-#define Error_LossUnknown                          (EBM_ERROR_CAST(15))
-#define Error_LossIllegalRegistrationName          (EBM_ERROR_CAST(16))
-#define Error_LossIllegalParamName                 (EBM_ERROR_CAST(17))
-#define Error_LossDuplicateParamName               (EBM_ERROR_CAST(18))
+#define Error_LossConstructorException             (EBM_ERROR_CAST(-10))
+#define Error_LossParamUnknown                     (EBM_ERROR_CAST(-11))
+#define Error_LossParamValueMalformed              (EBM_ERROR_CAST(-12))
+#define Error_LossParamValueOutOfRange             (EBM_ERROR_CAST(-13))
+#define Error_LossParamMismatchWithConfig          (EBM_ERROR_CAST(-14))
+#define Error_LossUnknown                          (EBM_ERROR_CAST(-15))
+#define Error_LossIllegalRegistrationName          (EBM_ERROR_CAST(-16))
+#define Error_LossIllegalParamName                 (EBM_ERROR_CAST(-17))
+#define Error_LossDuplicateParamName               (EBM_ERROR_CAST(-18))
 
 #define GenerateUpdateOptions_Default              (EBM_GENERATE_UPDATE_OPTIONS_CAST(0x0000000000000000))
 #define GenerateUpdateOptions_DisableNewtonGain    (EBM_GENERATE_UPDATE_OPTIONS_CAST(0x0000000000000001))
@@ -327,40 +349,31 @@ EBM_NATIVE_IMPORT_EXPORT_INCLUDE SeedEbmType EBM_NATIVE_CALLING_CONVENTION Gener
    SeedEbmType stageRandomizationMix
 );
 
+EBM_NATIVE_IMPORT_EXPORT_INCLUDE IntEbmType EBM_NATIVE_CALLING_CONVENTION GetHistogramCutCount(
+   IntEbmType countSamples,
+   const double * featureValues,
+   IntEbmType strategy
+);
+
 EBM_NATIVE_IMPORT_EXPORT_INCLUDE ErrorEbmType EBM_NATIVE_CALLING_CONVENTION CutQuantile(
    IntEbmType countSamples,
    const FloatEbmType * featureValues,
    IntEbmType countSamplesPerBinMin,
    BoolEbmType isHumanized,
    IntEbmType * countCutsInOut,
-   FloatEbmType * cutsLowerBoundInclusiveOut,
-   IntEbmType * countMissingValuesOut,
-   FloatEbmType * minNonInfinityValueOut,
-   IntEbmType * countNegativeInfinityOut,
-   FloatEbmType * maxNonInfinityValueOut,
-   IntEbmType * countPositiveInfinityOut
+   FloatEbmType * cutsLowerBoundInclusiveOut
 );
 EBM_NATIVE_IMPORT_EXPORT_INCLUDE void EBM_NATIVE_CALLING_CONVENTION CutUniform(
    IntEbmType countSamples,
    const FloatEbmType * featureValues,
    IntEbmType * countCutsInOut,
-   FloatEbmType * cutsLowerBoundInclusiveOut,
-   IntEbmType * countMissingValuesOut,
-   FloatEbmType * minNonInfinityValueOut,
-   IntEbmType * countNegativeInfinityOut,
-   FloatEbmType * maxNonInfinityValueOut,
-   IntEbmType * countPositiveInfinityOut
+   FloatEbmType * cutsLowerBoundInclusiveOut
 );
 EBM_NATIVE_IMPORT_EXPORT_INCLUDE ErrorEbmType EBM_NATIVE_CALLING_CONVENTION CutWinsorized(
    IntEbmType countSamples,
    const FloatEbmType * featureValues,
    IntEbmType * countCutsInOut,
-   FloatEbmType * cutsLowerBoundInclusiveOut,
-   IntEbmType * countMissingValuesOut,
-   FloatEbmType * minNonInfinityValueOut,
-   IntEbmType * countNegativeInfinityOut,
-   FloatEbmType * maxNonInfinityValueOut,
-   IntEbmType * countPositiveInfinityOut
+   FloatEbmType * cutsLowerBoundInclusiveOut
 );
 
 EBM_NATIVE_IMPORT_EXPORT_INCLUDE ErrorEbmType EBM_NATIVE_CALLING_CONVENTION SuggestGraphBounds(
@@ -381,7 +394,6 @@ EBM_NATIVE_IMPORT_EXPORT_INCLUDE ErrorEbmType EBM_NATIVE_CALLING_CONVENTION Disc
    IntEbmType * discretizedOut
 );
 
-
 EBM_NATIVE_IMPORT_EXPORT_INCLUDE IntEbmType EBM_NATIVE_CALLING_CONVENTION SizeDataSetHeader(
    IntEbmType countFeatures,
    IntEbmType countWeights,
@@ -392,8 +404,7 @@ EBM_NATIVE_IMPORT_EXPORT_INCLUDE ErrorEbmType EBM_NATIVE_CALLING_CONVENTION Fill
    IntEbmType countWeights,
    IntEbmType countTargets,
    IntEbmType countBytesAllocated,
-   void * fillMem,
-   IntEbmType * opaqueStateOut
+   void * fillMem
 );
 
 EBM_NATIVE_IMPORT_EXPORT_INCLUDE IntEbmType EBM_NATIVE_CALLING_CONVENTION SizeFeature(
@@ -408,8 +419,7 @@ EBM_NATIVE_IMPORT_EXPORT_INCLUDE ErrorEbmType EBM_NATIVE_CALLING_CONVENTION Fill
    IntEbmType countSamples,
    const IntEbmType * binnedData,
    IntEbmType countBytesAllocated,
-   void * fillMem,
-   IntEbmType * opaqueStateInOut
+   void * fillMem
 );
 
 EBM_NATIVE_IMPORT_EXPORT_INCLUDE IntEbmType EBM_NATIVE_CALLING_CONVENTION SizeWeight(
@@ -420,8 +430,7 @@ EBM_NATIVE_IMPORT_EXPORT_INCLUDE ErrorEbmType EBM_NATIVE_CALLING_CONVENTION Fill
    IntEbmType countSamples,
    const FloatEbmType * weights,
    IntEbmType countBytesAllocated,
-   void * fillMem,
-   IntEbmType * opaqueStateInOut
+   void * fillMem
 );
 
 EBM_NATIVE_IMPORT_EXPORT_INCLUDE IntEbmType EBM_NATIVE_CALLING_CONVENTION SizeClassificationTarget(
@@ -434,8 +443,7 @@ EBM_NATIVE_IMPORT_EXPORT_INCLUDE ErrorEbmType EBM_NATIVE_CALLING_CONVENTION Fill
    IntEbmType countSamples,
    const IntEbmType * targets,
    IntEbmType countBytesAllocated,
-   void * fillMem,
-   IntEbmType * opaqueStateInOut
+   void * fillMem
 );
 
 EBM_NATIVE_IMPORT_EXPORT_INCLUDE IntEbmType EBM_NATIVE_CALLING_CONVENTION SizeRegressionTarget(
@@ -446,8 +454,7 @@ EBM_NATIVE_IMPORT_EXPORT_INCLUDE ErrorEbmType EBM_NATIVE_CALLING_CONVENTION Fill
    IntEbmType countSamples,
    const FloatEbmType * targets,
    IntEbmType countBytesAllocated,
-   void * fillMem,
-   IntEbmType * opaqueStateInOut
+   void * fillMem
 );
 
 

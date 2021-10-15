@@ -211,8 +211,6 @@ class EBMPreprocessor(BaseEstimator, TransformerMixin):
             self.col_types_.append(col_info["type"])
             if col_info["type"] == "continuous":
                 col_data = col_data.astype(float)
-                count_missing = 0
-
                 if self.binning == "private":
                     min_val, max_val = self.privacy_schema[col_idx]
                     cuts, bin_counts = DPUtils.private_numeric_binning(
@@ -229,34 +227,20 @@ class EBMPreprocessor(BaseEstimator, TransformerMixin):
                         if self.binning == 'quantile_humanized':
                             is_humanized = 1
 
-                        (
-                            cuts, 
-                            count_missing, 
-                            min_val, 
-                            max_val, 
-                        ) = native.cut_quantile(
-                            col_data, 
-                            min_samples_bin, 
-                            is_humanized, 
-                            self.max_bins - 2, # one bin for missing, and # of cuts is one less again
-                        )
+                        # one bin for missing, and # of cuts is one less again
+                        cuts = native.cut_quantile(col_data, min_samples_bin, is_humanized, self.max_bins - 2)
                     elif self.binning == "uniform":
-                        (
-                            cuts, 
-                            count_missing, 
-                            min_val, 
-                            max_val,
-                        ) = native.cut_uniform(
-                            col_data, 
-                            self.max_bins - 2, # one bin for missing, and # of cuts is one less again
-                        )
+                        # one bin for missing, and # of cuts is one less again
+                        cuts = native.cut_uniform(col_data, self.max_bins - 2)
                     else:
                         raise ValueError(f"Unrecognized bin type: {self.binning}")
 
+                    min_val = np.nanmin(col_data)
+                    max_val = np.nanmax(col_data)
+
                     discretized = native.discretize(col_data, cuts)
                     bin_counts = np.bincount(discretized, minlength=len(cuts) + 2)
-                    if count_missing != 0:
-                        col_data = col_data[~np.isnan(col_data)]
+                    col_data = col_data[~np.isnan(col_data)]
 
                     hist_counts, hist_edges = np.histogram(col_data, bins="doane")
 
@@ -307,7 +291,11 @@ class EBMPreprocessor(BaseEstimator, TransformerMixin):
         unknown_constant = -1
 
         native = Native.get_native_singleton()
+
         X_new = np.copy(X)
+        if issubclass(X.dtype.type, np.unsignedinteger):
+            X_new = X_new.astype(np.int64)
+
         for col_idx in range(X.shape[1]):
             col_type = self.col_types_[col_idx]
             col_data = X[:, col_idx]
@@ -317,7 +305,6 @@ class EBMPreprocessor(BaseEstimator, TransformerMixin):
                 cuts = self.col_bin_edges_[col_idx]
 
                 discretized = native.discretize(col_data, cuts)
-                
                 X_new[:, col_idx] = discretized
 
             elif col_type == "ordinal":
@@ -335,6 +322,10 @@ class EBMPreprocessor(BaseEstimator, TransformerMixin):
                         if key == "DPOther": 
                             unknown_constant = val
                             missing_constant = val
+                            break
+                    else: # If DPOther keyword doesn't exist, revert to standard encoding scheme
+                        missing_constant = 0
+                        unknown_constant = -1
 
                 if isinstance(self.missing_str, list):
                     for val in self.missing_str:
@@ -346,7 +337,6 @@ class EBMPreprocessor(BaseEstimator, TransformerMixin):
                 X_new[:, col_idx] = np.fromiter(
                     (mapping.get(x, unknown_constant) for x in col_data), dtype=np.int64, count=X.shape[0]
                 )
-                
 
         return X_new.astype(np.int64)
 

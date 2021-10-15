@@ -5,7 +5,6 @@
 from sys import platform
 import ctypes as ct
 from numpy.ctypeslib import ndpointer
-from multiprocessing.sharedctypes import RawArray
 import numpy as np
 import os
 import struct
@@ -31,6 +30,7 @@ class Native:
     _TraceLevelVerbose = 4
 
     _native = None
+    # if we supported win32 32-bit functions then this would need to be WINFUNCTYPE
     _LogFuncType = ct.CFUNCTYPE(None, ct.c_int32, ct.c_char_p)
 
     def __init__(self):
@@ -48,33 +48,33 @@ class Native:
 
     @staticmethod
     def _get_native_exception(error_code, native_function):  # pragma: no cover
-        if error_code == 2:
+        if error_code == -1:
             return Exception(f'Out of memory in {native_function}')
-        elif error_code == 3:
+        elif error_code == -2:
             return Exception(f'Unexpected internal error in {native_function}')
-        elif error_code == 4:
+        elif error_code == -3:
             return Exception(f'Illegal native parameter value in {native_function}')
-        elif error_code == 5:
+        elif error_code == -4:
             return Exception(f'User native parameter value error in {native_function}')
-        elif error_code == 6:
+        elif error_code == -5:
             return Exception(f'Thread start failed in {native_function}')
-        elif error_code == 10:
+        elif error_code == -10:
             return Exception(f'Loss constructor native exception in {native_function}')
-        elif error_code == 11:
+        elif error_code == -11:
             return Exception(f'Loss parameter unknown')
-        elif error_code == 12:
+        elif error_code == -12:
             return Exception(f'Loss parameter value malformed')
-        elif error_code == 13:
+        elif error_code == -13:
             return Exception(f'Loss parameter value out of range')
-        elif error_code == 14:
+        elif error_code == -14:
             return Exception(f'Loss parameter mismatch')
-        elif error_code == 15:
+        elif error_code == -15:
             return Exception(f'Unrecognized loss type')
-        elif error_code == 16:
+        elif error_code == -16:
             return Exception(f'Illegal loss registration name')
-        elif error_code == 17:
+        elif error_code == -17:
             return Exception(f'Illegal loss parameter name')
-        elif error_code == 18:
+        elif error_code == -18:
             return Exception(f'Duplicate loss parameter name')
         else:
             return Exception(f'Unrecognized native return code {error_code} in {native_function}')
@@ -189,65 +189,54 @@ class Native:
 
         return sample_counts_out
 
+    def get_histogram_cut_count(self, col_data, strategy=None):
+        n_cuts = self._unsafe.GetHistogramCutCount(
+            col_data.shape[0],
+            col_data, 
+            0
+        )
+        return n_cuts
+
     def cut_quantile(self, col_data, min_samples_bin, is_humanized, max_cuts):
         cuts = np.empty(max_cuts, dtype=np.float64, order="C")
         count_cuts = ct.c_int64(max_cuts)
-        count_missing = ct.c_int64(0)
-        min_val = ct.c_double(0)
-        count_neg_inf = ct.c_int64(0)
-        max_val = ct.c_double(0)
-        count_inf = ct.c_int64(0)
-
         return_code = self._unsafe.CutQuantile(
             col_data.shape[0],
             col_data, 
             min_samples_bin,
             is_humanized,
             ct.byref(count_cuts),
-            cuts,
-            ct.byref(count_missing),
-            ct.byref(min_val),
-            ct.byref(count_neg_inf),
-            ct.byref(max_val),
-            ct.byref(count_inf)
+            cuts
         )
         if return_code:  # pragma: no cover
             raise Native._get_native_exception(return_code, "CutQuantile")
 
-        cuts = cuts[:count_cuts.value]
-        count_missing = count_missing.value
-        min_val = min_val.value
-        max_val = max_val.value
-
-        return cuts, count_missing, min_val, max_val
+        return cuts[:count_cuts.value]
 
     def cut_uniform(self, col_data, max_cuts):
         cuts = np.empty(max_cuts, dtype=np.float64, order="C")
         count_cuts = ct.c_int64(max_cuts)
-        count_missing = ct.c_int64(0)
-        min_val = ct.c_double(0)
-        count_neg_inf = ct.c_int64(0)
-        max_val = ct.c_double(0)
-        count_inf = ct.c_int64(0)
-
         self._unsafe.CutUniform(
             col_data.shape[0],
             col_data, 
             ct.byref(count_cuts),
-            cuts,
-            ct.byref(count_missing),
-            ct.byref(min_val),
-            ct.byref(count_neg_inf),
-            ct.byref(max_val),
-            ct.byref(count_inf)
+            cuts
         )
+        return cuts[:count_cuts.value]
 
-        cuts = cuts[:count_cuts.value]
-        count_missing = count_missing.value
-        min_val = min_val.value
-        max_val = max_val.value
+    def cut_winsorized(self, col_data, max_cuts):
+        cuts = np.empty(max_cuts, dtype=np.float64, order="C")
+        count_cuts = ct.c_int64(max_cuts)
+        return_code = self._unsafe.CutWinsorized(
+            col_data.shape[0],
+            col_data, 
+            ct.byref(count_cuts),
+            cuts
+        )
+        if return_code:  # pragma: no cover
+            raise Native._get_native_exception(return_code, "CutWinsorized")
 
-        return cuts, count_missing, min_val, max_val
+        return cuts[:count_cuts.value]
 
     def suggest_graph_bounds(self, cuts, min_val=np.nan, max_val=np.nan):
         low_graph_bound = ct.c_double(0)
@@ -284,32 +273,27 @@ class Native:
     def size_data_set_header(self, n_features, n_weights, n_targets):
         n_bytes = self._unsafe.SizeDataSetHeader(n_features, n_weights, n_targets)
         if n_bytes < 0:  # pragma: no cover
-            raise Native._get_native_exception(3, "SizeDataSetHeader")
+            raise Native._get_native_exception(n_bytes, "SizeDataSetHeader")
         return n_bytes
 
     def fill_data_set_header(self, n_features, n_weights, n_targets, n_bytes, shared_data):
-        opaque_state = ct.c_int64(0)
         return_code = self._unsafe.FillDataSetHeader(
             n_features, 
             n_weights, 
             n_targets, 
             n_bytes, 
             shared_data, 
-            ct.byref(opaque_state),
         )
         if return_code:  # pragma: no cover
             raise Native._get_native_exception(return_code, "FillDataSetHeader")
 
-        return opaque_state.value
-
     def size_feature(self, categorical, n_bins, binned_data):
         n_bytes = self._unsafe.SizeFeature(categorical, n_bins, len(binned_data), binned_data)
         if n_bytes < 0:  # pragma: no cover
-            raise Native._get_native_exception(3, "SizeFeature")
+            raise Native._get_native_exception(n_bytes, "SizeFeature")
         return n_bytes
 
-    def fill_feature(self, categorical, n_bins, binned_data, n_bytes, shared_data, opaque_state):
-        opaque_state = ct.c_int64(opaque_state)
+    def fill_feature(self, categorical, n_bins, binned_data, n_bytes, shared_data):
         return_code = self._unsafe.FillFeature(
             categorical, 
             n_bins, 
@@ -317,73 +301,58 @@ class Native:
             binned_data, 
             n_bytes, 
             shared_data,
-            ct.byref(opaque_state),
         )
         if return_code:  # pragma: no cover
             raise Native._get_native_exception(return_code, "FillFeature")
 
-        return opaque_state.value
-
     def size_weight(self, weights):
         n_bytes = self._unsafe.SizeWeight(len(weights), weights)
         if n_bytes < 0:  # pragma: no cover
-            raise Native._get_native_exception(3, "SizeWeight")
+            raise Native._get_native_exception(n_bytes, "SizeWeight")
         return n_bytes
 
-    def fill_weight(self, weights, n_bytes, shared_data, opaque_state):
-        opaque_state = ct.c_int64(opaque_state)
+    def fill_weight(self, weights, n_bytes, shared_data):
         return_code = self._unsafe.FillWeight(
             len(weights), 
             weights, 
             n_bytes, 
             shared_data, 
-            ct.byref(opaque_state),
         )
         if return_code:  # pragma: no cover
             raise Native._get_native_exception(return_code, "FillWeight")
 
-        return opaque_state.value
-
     def size_classification_target(self, n_classes, targets):
         n_bytes = self._unsafe.SizeClassificationTarget(n_classes, len(targets), targets)
         if n_bytes < 0:  # pragma: no cover
-            raise Native._get_native_exception(3, "SizeClassificationTarget")
+            raise Native._get_native_exception(n_bytes, "SizeClassificationTarget")
         return n_bytes
 
-    def fill_classification_target(self, n_classes, targets, n_bytes, shared_data, opaque_state):
-        opaque_state = ct.c_int64(opaque_state)
+    def fill_classification_target(self, n_classes, targets, n_bytes, shared_data):
         return_code = self._unsafe.FillClassificationTarget(
             n_classes, 
             len(targets), 
             targets, 
             n_bytes, 
             shared_data,
-            ct.byref(opaque_state),
         )
         if return_code:  # pragma: no cover
             raise Native._get_native_exception(return_code, "FillClassificationTarget")
 
-        return opaque_state.value
-
     def size_regression_target(self, targets):
         n_bytes = self._unsafe.SizeRegressionTarget(len(targets), targets)
         if n_bytes < 0:  # pragma: no cover
-            raise Native._get_native_exception(3, "SizeRegressionTarget")
+            raise Native._get_native_exception(n_bytes, "SizeRegressionTarget")
         return n_bytes
 
-    def fill_regression_target(self, targets, n_bytes, shared_data, opaque_state):
-        opaque_state = ct.c_int64(opaque_state)
+    def fill_regression_target(self, targets, n_bytes, shared_data):
         return_code = self._unsafe.FillRegressionTarget(
             len(targets), 
             targets, 
             n_bytes, 
             shared_data, 
-            ct.byref(opaque_state),
         )
         if return_code:  # pragma: no cover
             raise Native._get_native_exception(return_code, "FillRegressionTarget")
-
-        return opaque_state.value
 
 
     @staticmethod
@@ -475,6 +444,16 @@ class Native:
         ]
         self._unsafe.StratifiedSamplingWithoutReplacement.restype = ct.c_int32
 
+        self._unsafe.GetHistogramCutCount.argtypes = [
+            # int64_t countSamples
+            ct.c_int64,
+            # double * featureValues
+            ndpointer(dtype=ct.c_double, ndim=1, flags="C_CONTIGUOUS"),
+            # int64_t strategy
+            ct.c_int64,
+        ]
+        self._unsafe.GetHistogramCutCount.restype = ct.c_int64
+
         self._unsafe.CutQuantile.argtypes = [
             # int64_t countSamples
             ct.c_int64,
@@ -488,16 +467,6 @@ class Native:
             ct.POINTER(ct.c_int64),
             # double * cutsLowerBoundInclusiveOut
             ndpointer(dtype=ct.c_double, ndim=1, flags="C_CONTIGUOUS"),
-            # int64_t * countMissingValuesOut
-            ct.POINTER(ct.c_int64),
-            # double * minNonInfinityValueOut
-            ct.POINTER(ct.c_double),
-            # int64_t * countNegativeInfinityOut
-            ct.POINTER(ct.c_int64),
-            # double * maxNonInfinityValueOut
-            ct.POINTER(ct.c_double),
-            # int64_t * countPositiveInfinityOut
-            ct.POINTER(ct.c_int64),
         ]
         self._unsafe.CutQuantile.restype = ct.c_int32
 
@@ -510,16 +479,6 @@ class Native:
             ct.POINTER(ct.c_int64),
             # double * cutsLowerBoundInclusiveOut
             ndpointer(dtype=ct.c_double, ndim=1, flags="C_CONTIGUOUS"),
-            # int64_t * countMissingValuesOut
-            ct.POINTER(ct.c_int64),
-            # double * minNonInfinityValueOut
-            ct.POINTER(ct.c_double),
-            # int64_t * countNegativeInfinityOut
-            ct.POINTER(ct.c_int64),
-            # double * maxNonInfinityValueOut
-            ct.POINTER(ct.c_double),
-            # int64_t * countPositiveInfinityOut
-            ct.POINTER(ct.c_int64),
         ]
         self._unsafe.CutUniform.restype = None
 
@@ -532,16 +491,6 @@ class Native:
             ct.POINTER(ct.c_int64),
             # double * cutsLowerBoundInclusiveOut
             ndpointer(dtype=ct.c_double, ndim=1, flags="C_CONTIGUOUS"),
-            # int64_t * countMissingValuesOut
-            ct.POINTER(ct.c_int64),
-            # double * minNonInfinityValueOut
-            ct.POINTER(ct.c_double),
-            # int64_t * countNegativeInfinityOut
-            ct.POINTER(ct.c_int64),
-            # double * maxNonInfinityValueOut
-            ct.POINTER(ct.c_double),
-            # int64_t * countPositiveInfinityOut
-            ct.POINTER(ct.c_int64),
         ]
         self._unsafe.CutWinsorized.restype = ct.c_int32
 
@@ -601,8 +550,6 @@ class Native:
             ct.c_int64,
             # void * fillMem
             ct.c_void_p,
-            # int64_t * opaqueStateOut
-            ct.POINTER(ct.c_int64),
         ]
         self._unsafe.FillDataSetHeader.restype = ct.c_int32
 
@@ -631,8 +578,6 @@ class Native:
             ct.c_int64,
             # void * fillMem
             ct.c_void_p,
-            # int64_t * opaqueStateInOut
-            ct.POINTER(ct.c_int64),
         ]
         self._unsafe.FillFeature.restype = ct.c_int32
 
@@ -653,8 +598,6 @@ class Native:
             ct.c_int64,
             # void * fillMem
             ct.c_void_p,
-            # int64_t * opaqueStateInOut
-            ct.POINTER(ct.c_int64),
         ]
         self._unsafe.FillWeight.restype = ct.c_int32
 
@@ -679,8 +622,6 @@ class Native:
             ct.c_int64,
             # void * fillMem
             ct.c_void_p,
-            # int64_t * opaqueStateInOut
-            ct.POINTER(ct.c_int64),
         ]
         self._unsafe.FillClassificationTarget.restype = ct.c_int32
 
@@ -701,8 +642,6 @@ class Native:
             ct.c_int64,
             # void * fillMem
             ct.c_void_p,
-            # int64_t * opaqueStateInOut
-            ct.POINTER(ct.c_int64),
         ]
         self._unsafe.FillRegressionTarget.restype = ct.c_int32
 

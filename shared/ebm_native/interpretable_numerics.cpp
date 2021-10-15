@@ -68,10 +68,7 @@ k_cExponentMaxTextDigits < k_cExponentMinTextDigits ? k_cExponentMinTextDigits :
 constexpr size_t k_iExp = size_t { 3 } + k_cDigitsAfterPeriod;
 constexpr size_t k_cCharsFloatPrint = k_iExp + size_t { 2 } + k_cExponentTextDigits + size_t { 1 };
 
-extern FloatEbmType ArithmeticMean(
-   const FloatEbmType low,
-   const FloatEbmType high
-) noexcept {
+extern FloatEbmType ArithmeticMean(const FloatEbmType low, const FloatEbmType high) noexcept {
    // nan values represent missing, and are filtered out from our data prior to discretization
    EBM_ASSERT(!std::isnan(low));
    EBM_ASSERT(!std::isnan(high));
@@ -137,7 +134,10 @@ extern FloatEbmType ArithmeticMean(
    return avg;
 }
 
-INLINE_RELEASE_UNTEMPLATED static FloatEbmType GeometricMeanPositives(const FloatEbmType low, const FloatEbmType high) noexcept {
+INLINE_RELEASE_UNTEMPLATED static FloatEbmType GeometricMeanPositives(
+   const FloatEbmType low, 
+   const FloatEbmType high
+) noexcept {
    // nan values represent missing, and are filtered out from our data prior to discretization
    EBM_ASSERT(!std::isnan(low));
    EBM_ASSERT(!std::isnan(high));
@@ -160,9 +160,7 @@ INLINE_RELEASE_UNTEMPLATED static FloatEbmType GeometricMeanPositives(const Floa
    // point jitter, we might get any of these scenarios.  This is a real corner case that we can presume
    // is very very very rare.
 
-   FloatEbmType result = std::exp((std::log(low) + std::log(high)) * FloatEbmType {
-      0.5
-   });
+   FloatEbmType result = std::exp((std::log(low) + std::log(high)) * FloatEbmType { 0.5 });
 
    // IEEE 754 doesn't give us a lot of guarantees about log and exp.  They don't have have "correct rounding"
    // guarantees, unlike basic operators, so we could obtain results outside of our bounds, or perhaps
@@ -186,7 +184,7 @@ INLINE_RELEASE_UNTEMPLATED static FloatEbmType GeometricMeanPositives(const Floa
    return result;
 }
 
-static bool FloatToString(const FloatEbmType val, char * const str) noexcept {
+static bool FloatToFullString(const FloatEbmType val, char * const str) noexcept {
    EBM_ASSERT(!std::isnan(val));
    EBM_ASSERT(!std::isinf(val));
    EBM_ASSERT(FloatEbmType { 0 } <= val);
@@ -263,8 +261,86 @@ static bool FloatToString(const FloatEbmType val, char * const str) noexcept {
    return false;
 }
 
+#if 0
+
+// TODO: this entire section below!
+
+// We have a problem in that converting from a float to a string has many possible legal outputs.
+// IEEE-754 requires that if we output 17 to 20 digits for a double that the result can be converted from the
+// string back to the original double, but no guarantees are made that 16 digits or 21 digits will work,
+// and some language implementations output shorter strings like 0.25 which have exact representations in IEEE-754
+// or strings like 0.1 when 0.1 converts back to the original float representation in their representation
+// There are odd corner cases that rely on the type of rounding (IEEE-754 requires bankers' rounding for strings
+// I believe).  There are legals and illegal ways to format IEEE-754 in text specifically:
+// ISO 6093:1985 -> https://www.titanwolf.org/Network/q/4d680399-6711-4742-9900-74a42ad9f5d7/y
+// 
+// We desire cross-language identical results, so when we have cut points or categorical strings
+// of floats we want these to be identical between languages for both converting to strings and when strings
+// are converted back to floats.  This also applies to serialization to JSON and other text.  To support this
+// we implement our own converters that are guararanteed to be identical between languages.  
+// 
+// The gold standard for float/string conversion is this: http://www.netlib.org/fp/dtoa.c
+// It is used in python: https://github.com/python/cpython/blob/main/Python/dtoa.c
+// Microsoft Edge for Android uses it: https://www.microsoft.com/en-us/legal/products/notices/msedgeandroid
+// Java uses a port of this made to the Java language
+// Other languages also use this code, but not any C++ built-in libraries yet.
+// Some languages don't round trip properly with less than 17 digits.
+// Some languages are buggy and don't correctly round when outputting 17 digits.
+//
+// This implementation will progressively shorten the string until it reaches the point where the conversion
+// back won't be identical which is a stronger guarantee than IEEE-754.
+// 
+// Outputting 17 digits should be guaranteed to have a unique conversion back to float, but when shortening
+// to 16 digits there are oddities where incrementing the 16th digit upwards yields a good result but
+// chopping the 17th digit doesn't work.  I assume there are numbers where both chopping the 17th digit and
+// either moving the 16th digit up or keeping it the same yield the same result, so we need a consistent
+// policy with regards to the 16th digit.  For the 15th digit we can always chop since there are no numbers
+// where moving the 15th digit up yields the same number. One example is:
+// 2e-44 which is 5.684341886080801486968994140625e-14.  Rounded to 15 digits (5.68434188608080e-14) doesn't work.
+// Rounding down to 16 digits down doesn't work (5.684341886080801e-14), but rounding up to (5.684341886080802e-14) does work.
+// as described in: https://www.exploringbinary.com/the-shortest-decimal-string-that-round-trips-may-not-be-the-nearest/
+
+// for cut points we should always use float64 values since that gives us the best resolution, and our caller
+// could have float64 values or float32 values and cuts points that are float64 can work on both of them
+// Also, float64 is the most cross-language compatible format, and in JSON it's the only option.
+
+// for scores we should always use float64 values.  Unlike cut points, we'll be using float32 internally within
+// the booster, BUT we only need to turn scores into text for serialization to JSON, and JSON only supports
+// float64 values, so we need to output that.  We should get 100% reproducibility by turning float32 scores
+// into float64, then text, then back to float64, then back to float32, so this is fine.  The only thing
+// we loose is a bit of simplicity since our JSON scores will have more digits, but we don't have the equivalent
+// of humanized cuts anyways, so the scores will have as many decimals as we get via boosting anywyas
+
+// lastly, since there are no integers in JSON (everything is a double), we should eliminate the difference
+// between float64 and integers when numbers can be represented as unique integers.  WE should convert the float
+// 4.0 therefore to "4" for any number that meets the criteria: "floor(x) == x && abs(x) <= SAFE_FLOAT64_AS_INT_MAX"
+
+extern IntEbmType GetCountCharactersPerFloat() {
+   // for calling FloatsToStrings the caller needs to allocate this many bytes per float in the string buffer
+   // after every float is either a space separator or a null-terminator
+   return k_cCharsFloatPrint;
+}
+
+extern ErrorEbmType FloatsToString(IntEbmType count, const double * values, char * str) {
+   // TODO: implement this:
+   // 
+   // This code takes an array of floats and converts them to a single string separated by spaces and a null-terminator
+   // at the end
+}
+
+extern ErrorEbmType StringToFloats(const char * str, double * values) {
+   // TODO: implement this:
+   //
+   // This code takes a single string with the floats separated by spaces and a null-terminator at the end
+   // and converts these into an array of floats.  The caller had better be carefull in allocating, but they
+   // should know how many float values they put into the string so they should know how many values they'll
+   // get back and therefore how big to make the buffer
+}
+
+#endif
+
 INLINE_RELEASE_UNTEMPLATED static long GetExponent(const char * const str) noexcept {
-   // we previously checked that this converted to a long in FloatToString
+   // we previously checked that this converted to a long in FloatToFullString
    return strtol(&str[k_iExp + size_t { 1 }], nullptr, int { 10 });
 }
 
@@ -272,6 +348,13 @@ static FloatEbmType StringToFloatWithFixup(
    const char * const str,
    const size_t iIdenticalCharsRequired
 ) noexcept {
+   // TODO: this is misguided... python shortens floating point numbers to the shorted string when printing numbers
+   // and using nextafter to get to all zeros makes python, and other languages that do the same have a bunch of
+   // zeros and a long string.  So, if 1.6999999999999994 rounds to 1.7 nicely in python, don't use nextafter
+   // below to convert it to 1.7000000000000009 since then python will need to output the long string
+   // to avoid ambiguity since 1.7 will convert to 1.6999999999999994 and not 1.7000000000000009
+   // see: https://www.exploringbinary.com/the-shortest-decimal-string-that-round-trips-may-not-be-the-nearest/
+
    char strRehydrate[k_cCharsFloatPrint];
 
    // we only convert str values that we've verified to conform, OR chopped versions of these which we know to be legal
@@ -298,7 +381,7 @@ static FloatEbmType StringToFloatWithFixup(
    // include the equals case so that the compiler is less likely to optimize that out
    ret = std::numeric_limits<FloatEbmType>::max() <= ret ? std::numeric_limits<FloatEbmType>::max() : ret;
 
-   if(FloatToString(ret, strRehydrate)) {
+   if(FloatToFullString(ret, strRehydrate)) {
       return ret;
    }
 
@@ -440,7 +523,7 @@ extern FloatEbmType GetInterpretableCutPointFloat(
          // check for underflow
          if(LIKELY(FloatEbmType { 0 } != avg)) {
             ret = avg;
-            if(LIKELY(!FloatToString(ret, strAvg)) && LIKELY(!StringToFloatChopped(strAvg, 0, &lowChop, &highChop))) {
+            if(LIKELY(!FloatToFullString(ret, strAvg)) && LIKELY(!StringToFloatChopped(strAvg, 0, &lowChop, &highChop))) {
                EBM_ASSERT(!std::isnan(lowChop));
                EBM_ASSERT(!std::isinf(lowChop));
                // it's possible we could have chopped off digits such that we round down to zero
@@ -492,7 +575,7 @@ extern FloatEbmType GetInterpretableCutPointFloat(
             EBM_ASSERT(!std::isinf(ret));
             EBM_ASSERT(FloatEbmType { 0 } <= ret);
 
-            if(LIKELY(!FloatToString(ret, strAvg)) && LIKELY(!StringToFloatChopped(strAvg, 0, &lowChop, &highChop))) {
+            if(LIKELY(!FloatToFullString(ret, strAvg)) && LIKELY(!StringToFloatChopped(strAvg, 0, &lowChop, &highChop))) {
                EBM_ASSERT(!std::isnan(lowChop));
                EBM_ASSERT(!std::isinf(lowChop));
                // it's possible we could have chopped off digits such that we round down to zero
@@ -557,7 +640,7 @@ extern FloatEbmType GetInterpretableCutPointFloat(
       EBM_ASSERT(low < ret);
       EBM_ASSERT(ret <= high);
 
-      if(LIKELY(LIKELY(!FloatToString(ret, strAvg)) &&
+      if(LIKELY(LIKELY(!FloatToFullString(ret, strAvg)) &&
          LIKELY(!StringToFloatChopped(strAvg, size_t { 0 }, &lowChop, &highChop)))) {
          // avg / low == high / avg (approximately) since it's the geometric mean
          // the lowChop or highChop side that is closest to the average will be farthest away
@@ -591,8 +674,8 @@ extern FloatEbmType GetInterpretableCutPointFloat(
 
       char strLow[k_cCharsFloatPrint];
       char strHigh[k_cCharsFloatPrint];
-      if(LIKELY(LIKELY(!FloatToString(low, strLow)) &&
-         LIKELY(!FloatToString(high, strHigh)) && LIKELY(!FloatToString(ret, strAvg)))) {
+      if(LIKELY(LIKELY(!FloatToFullString(low, strLow)) &&
+         LIKELY(!FloatToFullString(high, strHigh)) && LIKELY(!FloatToFullString(ret, strAvg)))) {
          size_t iTruncateMantissa = size_t { 0 };
          do {
             FloatEbmType lowHigh;
@@ -688,7 +771,7 @@ extern FloatEbmType GetInterpretableEndpoint(
       EBM_ASSERT(FloatEbmType { 0 } <= highBound);
 
       char str[k_cCharsFloatPrint];
-      if(LIKELY(!FloatToString(ret, str))) {
+      if(LIKELY(!FloatToFullString(ret, str))) {
          size_t iTruncateMantissa = size_t { 0 };
          do {
             FloatEbmType lowChop;
@@ -734,20 +817,9 @@ extern FloatEbmType GetInterpretableEndpoint(
    return ret;
 }
 
-extern size_t RemoveMissingValuesAndReplaceInfinities(
-   size_t cSamples,
-   FloatEbmType * const aValues,
-   FloatEbmType * const pMinNonInfinityValueOut,
-   IntEbmType * const pCountNegativeInfinityOut,
-   FloatEbmType * const pMaxNonInfinityValueOut,
-   IntEbmType * const pCountPositiveInfinityOut
-) noexcept {
+extern size_t RemoveMissingValuesAndReplaceInfinities(const size_t cSamples, FloatEbmType * const aValues) noexcept {
    EBM_ASSERT(size_t { 1 } <= cSamples);
    EBM_ASSERT(nullptr != aValues);
-   EBM_ASSERT(nullptr != pMinNonInfinityValueOut);
-   EBM_ASSERT(nullptr != pCountNegativeInfinityOut);
-   EBM_ASSERT(nullptr != pMaxNonInfinityValueOut);
-   EBM_ASSERT(nullptr != pCountPositiveInfinityOut);
 
    // In most cases we believe that for graphing the caller should only need the bin cuts that we'll eventually
    // return, and they'll want to position the graph to include the first and last cuts, and have a little bit of 
@@ -785,70 +857,24 @@ extern size_t RemoveMissingValuesAndReplaceInfinities(
    // +-infinity values in either the cut points, or the min/max values, which is good since serialization of
    // +-infinity isn't very standardized accross languages.  It's a problem in JSON especially.
 
-   FloatEbmType minNonInfinityValue = std::numeric_limits<FloatEbmType>::max();
-   size_t cNegativeInfinity = size_t { 0 };
-   FloatEbmType maxNonInfinityValue = std::numeric_limits<FloatEbmType>::lowest();
-   size_t cPositiveInfinity = size_t { 0 };
-
    FloatEbmType * pCopyFrom = aValues;
+   FloatEbmType * pCopyTo = aValues;
    const FloatEbmType * const pValuesEnd = aValues + cSamples;
    do {
       FloatEbmType val = *pCopyFrom;
-      if(UNLIKELY(std::isnan(val))) {
-         FloatEbmType * pCopyTo = pCopyFrom;
-         goto skip_val;
-         do {
-            val = *pCopyFrom;
-            if(PREDICTABLE(!std::isnan(val))) {
-               if(PREDICTABLE(std::numeric_limits<FloatEbmType>::infinity() == val)) {
-                  val = std::numeric_limits<FloatEbmType>::max();
-                  ++cPositiveInfinity;
-               } else if(PREDICTABLE(-std::numeric_limits<FloatEbmType>::infinity() == val)) {
-                  val = std::numeric_limits<FloatEbmType>::lowest();
-                  ++cNegativeInfinity;
-               } else {
-                  maxNonInfinityValue = UNPREDICTABLE(maxNonInfinityValue < val) ? val : maxNonInfinityValue;
-                  minNonInfinityValue = UNPREDICTABLE(val < minNonInfinityValue) ? val : minNonInfinityValue;
-               }
-               *pCopyTo = val;
-               ++pCopyTo;
-            }
-         skip_val:
-            ++pCopyFrom;
-         } while(LIKELY(pValuesEnd != pCopyFrom));
-         const size_t cSamplesWithoutMissing = pCopyTo - aValues;
-         EBM_ASSERT(cSamplesWithoutMissing < cSamples);
-
-         cSamples = cSamplesWithoutMissing;
-         break;
-      }
-      if(PREDICTABLE(std::numeric_limits<FloatEbmType>::infinity() == val)) {
-         *pCopyFrom = std::numeric_limits<FloatEbmType>::max();
-         ++cPositiveInfinity;
-      } else if(PREDICTABLE(-std::numeric_limits<FloatEbmType>::infinity() == val)) {
-         *pCopyFrom = std::numeric_limits<FloatEbmType>::lowest();
-         ++cNegativeInfinity;
-      } else {
-         maxNonInfinityValue = UNPREDICTABLE(maxNonInfinityValue < val) ? val : maxNonInfinityValue;
-         minNonInfinityValue = UNPREDICTABLE(val < minNonInfinityValue) ? val : minNonInfinityValue;
+      if(PREDICTABLE(!std::isnan(val))) {
+         val = UNPREDICTABLE(std::numeric_limits<FloatEbmType>::infinity() == val) ? 
+            std::numeric_limits<FloatEbmType>::max() : val;
+         val = UNPREDICTABLE(-std::numeric_limits<FloatEbmType>::infinity() == val) ? 
+            std::numeric_limits<FloatEbmType>::lowest() : val;
+         *pCopyTo = val;
+         ++pCopyTo;
       }
       ++pCopyFrom;
    } while(LIKELY(pValuesEnd != pCopyFrom));
-
-   if(UNLIKELY(cNegativeInfinity + cPositiveInfinity == cSamples)) {
-      // all values were special values (missing, +infinity, -infinity), so make our min/max both zero
-      maxNonInfinityValue = FloatEbmType { 0 };
-      minNonInfinityValue = FloatEbmType { 0 };
-   }
-
-   *pMinNonInfinityValueOut = minNonInfinityValue;
-   // this can't overflow since we got our cSamples from an IntEbmType, and we can't have more infinities than that
-   *pCountNegativeInfinityOut = static_cast<IntEbmType>(cNegativeInfinity);
-   *pMaxNonInfinityValueOut = maxNonInfinityValue;
-   // this can't overflow since we got our cSamples from an IntEbmType, and we can't have more infinities than that
-   *pCountPositiveInfinityOut = static_cast<IntEbmType>(cPositiveInfinity);
-
-   return cSamples;
+   const size_t cSamplesWithoutMissing = pCopyTo - aValues;
+   EBM_ASSERT(cSamplesWithoutMissing <= cSamples);
+   return cSamplesWithoutMissing;
 }
 
 EBM_NATIVE_IMPORT_EXPORT_BODY ErrorEbmType EBM_NATIVE_CALLING_CONVENTION SuggestGraphBounds(
@@ -1286,6 +1312,177 @@ EBM_NATIVE_IMPORT_EXPORT_BODY ErrorEbmType EBM_NATIVE_CALLING_CONVENTION Suggest
    *lowGraphBoundOut = lowGraphBound;
    *highGraphBoundOut = highGraphBound;
    return Error_None;
+}
+
+static size_t CountNormal(const size_t cSamples, const double * const aFeatureValues) {
+   EBM_ASSERT(1 <= cSamples);
+   EBM_ASSERT(nullptr != aFeatureValues);
+
+   size_t cNormal = 0;
+   const double * pFeatureValue = aFeatureValues;
+   const double * const featureValuesEnd = aFeatureValues + cSamples;
+   do {
+      const double val = *pFeatureValue;
+      if(!std::isnan(val) && !std::isinf(val)) {
+         ++cNormal;
+      }
+      ++pFeatureValue;
+   } while(featureValuesEnd != pFeatureValue);
+   return cNormal;
+}
+
+static double Stddev(const size_t cSamples, const double * const aFeatureValues, const size_t cNormal) {
+   EBM_ASSERT(2 <= cSamples);
+   EBM_ASSERT(2 <= cNormal);
+   EBM_ASSERT(nullptr != aFeatureValues);
+
+   // use Welford's method to calculate stddev
+   // https://stackoverflow.com/questions/895929/how-do-i-determine-the-standard-deviation-stddev-of-a-set-of-values
+   // https://www.johndcook.com/blog/standard_deviation/
+
+   double m = 0;
+   double s = 0;
+   size_t k = 0;
+   const double multFactor = double { 1 } / static_cast<double>(cNormal);
+   const double * pFeatureValue = aFeatureValues;
+   const double * const featureValuesEnd = aFeatureValues + cSamples;
+   do {
+      const double val = *pFeatureValue;
+      if(!std::isnan(val) && !std::isinf(val)) {
+         ++k;
+         const double numerator = val - m;
+         m += numerator / static_cast<double>(k);
+         s += multFactor * numerator * (val - m);
+      }
+      ++pFeatureValue;
+   } while(featureValuesEnd != pFeatureValue);
+   EBM_ASSERT(k == cNormal);
+   s = std::sqrt(s);
+   return s;
+}
+
+static double Mean(const size_t cSamples, const double * const aFeatureValues, const size_t cNormal) {
+   EBM_ASSERT(1 <= cSamples);
+   EBM_ASSERT(1 <= cNormal);
+   EBM_ASSERT(nullptr != aFeatureValues);
+
+   double sum = 0;
+   const double * pFeatureValue = aFeatureValues;
+   const double * const featureValuesEnd = aFeatureValues + cSamples;
+   do {
+      const double val = *pFeatureValue;
+      if(!std::isnan(val) && !std::isinf(val)) {
+         sum += val;
+      }
+      ++pFeatureValue;
+   } while(featureValuesEnd != pFeatureValue);
+
+   EBM_ASSERT(!std::isnan(sum));
+
+   const double cNormalDouble = static_cast<double>(cNormal);
+   if(!std::isinf(sum)) {
+      return sum / cNormalDouble;
+   }
+
+   // ok, maybe we overflowed. Try again but this time divide as we go. This is less accurate and slower, but whatever
+   const double cNormalDoubleInv = double { 1 } / cNormalDouble;
+   double mean = 0;
+   pFeatureValue = aFeatureValues;
+   do {
+      const double val = *pFeatureValue;
+      if(!std::isnan(val) && !std::isinf(val)) {
+         mean += val * cNormalDoubleInv;
+      }
+      ++pFeatureValue;
+   } while(featureValuesEnd != pFeatureValue);
+   return mean;
+}
+
+// we don't care if an extra log message is outputted due to the non-atomic nature of the decrement to this value
+static int g_cLogEnterGetHistogramCutCountParametersMessages = 25;
+static int g_cLogExitGetHistogramCutCountParametersMessages = 25;
+
+EBM_NATIVE_IMPORT_EXPORT_BODY IntEbmType EBM_NATIVE_CALLING_CONVENTION GetHistogramCutCount(
+   IntEbmType countSamples,
+   const double * featureValues,
+   IntEbmType strategy
+) {
+   UNUSED(strategy);
+
+   LOG_COUNTED_N(
+      &g_cLogEnterGetHistogramCutCountParametersMessages,
+      TraceLevelInfo,
+      TraceLevelVerbose,
+      "Entered GetHistogramCutCount: "
+      "countSamples=%" IntEbmTypePrintf ", "
+      "featureValues=%p, "
+      "strategy=%" IntEbmTypePrintf
+      ,
+      countSamples,
+      static_cast<const void *>(featureValues),
+      strategy
+   );
+
+   if(UNLIKELY(countSamples <= 0)) {
+      if(UNLIKELY(countSamples < 0)) {
+         LOG_0(TraceLevelWarning, "WARNING GetHistogramCutCount countSamples < 0");
+      }
+      return 0;
+   }
+   if(UNLIKELY(IsConvertError<size_t>(countSamples))) {
+      LOG_0(TraceLevelWarning, "WARNING GetHistogramCutCount IsConvertError<size_t>(countSamples)");
+      return 0;
+   }
+   const size_t cSamples = static_cast<size_t>(countSamples);
+   const size_t cNormal = CountNormal(cSamples, featureValues);
+
+   IntEbmType ret = 0;
+   if(size_t { 3 } <= cNormal) {
+      const double stddev = Stddev(cSamples, featureValues, cNormal);
+      if(double { 0 } < stddev) {
+         const double mean = Mean(cSamples, featureValues, cNormal);
+         const double cNormalDouble = static_cast<double>(cNormal);
+         const double cNormalCubicRootDouble = std::cbrt(cNormalDouble);
+         const double multFactor = double { 1 } / cNormalCubicRootDouble / stddev;
+
+         double g1 = 0;
+         const double * pFeatureValue = featureValues;
+         const double * const featureValuesEnd = featureValues + cSamples;
+         do {
+            const double val = *pFeatureValue;
+            if(!std::isnan(val) && !std::isinf(val)) {
+               const double interior = (val - mean) * multFactor;
+               g1 += interior * interior * interior;
+            }
+            ++pFeatureValue;
+         } while(featureValuesEnd != pFeatureValue);
+         g1 = std::abs(g1);
+
+         const double denom = std::sqrt(double { 6 } * (cNormalDouble - double { 2 }) / ((cNormalDouble + double { 1 }) * (cNormalDouble + double { 3 })));
+         const double countSturgesBins = double { 1 } + std::log2(cNormalDouble);
+         double countBins = countSturgesBins + std::log2(double { 1 } + g1 / denom);
+         countBins = std::ceil(countBins);
+         if(std::isnan(countBins) || std::isinf(countBins)) {
+            // use Sturges' formula if we have a numeracy issue with our data. countSturgesBins pretty much can't fail
+            countBins = std::ceil(countSturgesBins);
+         }
+         ret = double { FLOAT64_TO_INT_MAX } < countBins ? IntEbmType { FLOAT64_TO_INT_MAX } : static_cast<IntEbmType>(countBins);
+         EBM_ASSERT(1 <= ret); // since our formula started from 1 and added
+         --ret; // # of cuts is one less than the number of bins
+      }
+   }
+
+   LOG_COUNTED_N(
+      &g_cLogExitGetHistogramCutCountParametersMessages,
+      TraceLevelInfo,
+      TraceLevelVerbose,
+      "Exited GetHistogramCutCount: "
+      "ret=%" IntEbmTypePrintf
+      ,
+      ret
+   );
+
+   return ret;
 }
 
 } // DEFINED_ZONE_NAME

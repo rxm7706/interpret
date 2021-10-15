@@ -29,6 +29,7 @@ EXPORTS
   CreateRegressionInteractionDetector
   CalculateInteractionScore
   FreeInteractionDetector
+  GetHistogramCutCount
   CutQuantile
   CutWinsorized
   CutUniform

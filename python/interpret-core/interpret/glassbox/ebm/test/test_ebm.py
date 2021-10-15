@@ -520,7 +520,7 @@ def test_dp_ebm_adult():
     w_tr = np.ones_like(y_tr)
     w_tr[-1] = 2
 
-    clf = DPExplainableBoostingClassifier(binning='quantile', epsilon=1)
+    clf = DPExplainableBoostingClassifier(binning='private-quantile', epsilon=1)
     n_splits = 3
     ss = StratifiedShuffleSplit(n_splits=n_splits, test_size=0.25, random_state=1337)
     res = cross_validate(
@@ -580,5 +580,58 @@ def test_dp_ebm_external_privacy_schema():
     clf = DPExplainableBoostingRegressor(privacy_schema=privacy_schema)
     clf.fit(X, y)
     clf.predict(X)
+
+    valid_ebm(clf)
+
+@pytest.mark.slow
+def test_ebm_calibrated_classifier_cv():
+    """ Tests if unsigned integers can be handled when
+        using CalibratedClassifierCV.
+    """
+    from sklearn.calibration import CalibratedClassifierCV
+
+    X = np.array([[0, 1, 0, 0],
+                  [0, 0, 0, 1],
+                  [1, 0, 0, 0],
+                  [0, 1, 0, 0],
+                  [0, 1, 0, 0],
+                  [0, 0, 0, 1],
+                  [1, 0, 0, 0],
+                  [0, 0, 1, 0],
+                  [1, 0, 0, 0],
+                  [0, 0, 0, 1]],
+                  dtype=np.uint8)
+
+    y = np.array([0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+                 dtype=np.uint8)
+
+    clf = ExplainableBoostingClassifier()
+    calib = CalibratedClassifierCV(clf)
+    calib.fit(X, y)
+
+def test_ebm_unknown_value_at_predict():
+    """ Tests if unsigned integers can be handled when unknown values
+        are found by predict.
+
+        e.g. feature 3 has only 0's in X but a 1 in X_test.
+    """
+    X = np.array([[0, 1, 0, 0],
+                  [0, 0, 0, 1],
+                  [0, 0, 0, 0],
+                  [1, 0, 0, 0],
+                  [0, 0, 0, 1]],
+                  dtype=np.uint8)
+
+    X_test = np.array([[0, 1, 0, 0],
+                       [0, 0, 1, 1],
+                       [1, 0, 0, 0]],
+                       dtype=np.uint8)
+
+    y = np.array([0, 1, 1, 1, 1],
+                 dtype=np.uint8)
+
+    clf = ExplainableBoostingClassifier()
+    clf.fit(X, y)
+    clf.predict(X_test)
 
     valid_ebm(clf)
