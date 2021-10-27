@@ -12,7 +12,7 @@ from ....test.utils import (
     iris_classification,
 )
 from ....test.utils import synthetic_regression
-from ..ebm import ExplainableBoostingRegressor, ExplainableBoostingClassifier
+from ..ebm import ExplainableBoostingRegressor, ExplainableBoostingClassifier, EBMPreprocessor
 
 import numpy as np
 import pandas as pd
@@ -635,3 +635,90 @@ def test_ebm_unknown_value_at_predict():
     clf.predict(X_test)
 
     valid_ebm(clf)
+
+def test_global_explanation_mock_data():
+    ebm = ExplainableBoostingRegressor()
+
+    ebm.additive_terms_ = list()
+    ebm.additive_terms_.append(np.array([0, 1.0, -1.0, 2.0]))
+    ebm.additive_terms_.append(np.array([0, -2.0, 10, 0, 7]))
+
+    ebm.term_standard_deviations_ = list()
+    ebm.term_standard_deviations_.append(np.array([0, .2, .1, .3]))
+    ebm.term_standard_deviations_.append(np.array([0, .2, .1, .3, .5]))
+
+    ebm.feature_names = ['feature_1', 'feature_2']
+    ebm.feature_types = ['continuous', 'continuous']
+    ebm.feature_groups_ = [[0], [1]]
+    ebm.feature_importances_ = [np.float64(.45), np.float64(.63)]
+
+    ebm.preprocessor_ = EBMPreprocessor(ebm.feature_names, ebm.feature_types)
+    ebm.preprocessor_.col_bin_edges_ = {}
+    ebm.preprocessor_.col_bin_edges_[0] = np.array([2, 3])
+    ebm.preprocessor_.col_bin_edges_[1] = np.array([20, 25, 40])
+    ebm.preprocessor_.col_min_ = {}
+    ebm.preprocessor_.col_min_[0] = np.float64(1.0)
+    ebm.preprocessor_.col_min_[1] = np.float64(10)
+    ebm.preprocessor_.col_max_ = {}
+    ebm.preprocessor_.col_max_[0] = np.float64(5)
+    ebm.preprocessor_.col_max_[1] = np.float64(55)
+
+    ebm.has_fitted_ = True
+    explanation = ebm.explain_global()
+
+def gen_global_selector(ebm):
+    records = []
+
+    for feature_group_index, feature_indexes in enumerate(
+        ebm.feature_groups_
+    ):
+        record = {}
+        record["Name"] = ebm.feature_names[feature_indexes[0]]
+        record["Type"] = ebm.feature_types[feature_indexes[0]]
+        records.append(record)
+
+    columns = ["Name", "Type"]
+    df = pd.DataFrame.from_records(records, columns=columns)
+    return df
+
+def test_global_explanation_classifier_mock_data():
+    ebm = ExplainableBoostingClassifier()
+
+    ebm.additive_terms_ = list()
+    ebm.additive_terms_.append(np.array([0, 1.0, -1.0, 2.0]))
+    ebm.additive_terms_.append(np.array([0, -2.0, 10, 0, 7]))
+
+    ebm.term_standard_deviations_ = list()
+    ebm.term_standard_deviations_.append(np.array([0, .2, .1, .3]))
+    ebm.term_standard_deviations_.append(np.array([0, .2, .1, .3, .5]))
+
+    ebm.classes_ = np.array([0, 1])
+
+    ebm.feature_names = ['feature_1', 'feature_2']
+    ebm.feature_types = ['continuous', 'continuous']
+    ebm.feature_groups_ = [[0], [1]]
+    ebm.feature_importances_ = [np.float64(.45), np.float64(.63)]
+
+    ebm.preprocessor_ = EBMPreprocessor(ebm.feature_names, ebm.feature_types)
+    ebm.preprocessor_.col_bin_edges_ = {}
+    ebm.preprocessor_.col_bin_edges_[0] = np.array([2, 3])
+    ebm.preprocessor_.col_bin_edges_[1] = np.array([20, 25, 40])
+    ebm.preprocessor_.col_min_ = {}
+    ebm.preprocessor_.col_min_[0] = np.float64(1.0)
+    ebm.preprocessor_.col_min_[1] = np.float64(10)
+    ebm.preprocessor_.col_max_ = {}
+    ebm.preprocessor_.col_max_[0] = np.float64(5)
+    ebm.preprocessor_.col_max_[1] = np.float64(55)
+    ebm.preprocessor_.col_types_ = ['continuous', 'continuous']
+    ebm.preprocessor_.hist_edges_ = {}
+    ebm.preprocessor_.hist_edges_[0] = np.array([])
+    ebm.preprocessor_.hist_edges_[1] = np.array([])
+    ebm.preprocessor_.hist_counts_ = {}
+    ebm.preprocessor_.hist_counts_[0] = np.array([])
+    ebm.preprocessor_.hist_counts_[1] = np.array([])
+
+    ebm.global_selector = gen_global_selector(ebm)
+
+    ebm.has_fitted_ = True
+    explanation = ebm.explain_global()
+
