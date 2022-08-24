@@ -102,10 +102,15 @@ class EBMExplanation(FeatureValueExplanation):
             data_dict = sort_take(
                 data_dict, sort_fn=lambda x: -abs(x), top_n=15, reverse_results=True
             )
+            title = "Overall Term Importances: the average absolute contribution (score) for each term " \
+                "(feature or interaction) makes<br>when predicting across the training dataset. " \
+                "<a href='https://github.com/interpretml/interpret/blob/develop/examples/python/notebooks/EBM%20Feature%20Importances.ipynb'>Learn More.</a>"
+
             figure = plot_horizontal_bar(
                 data_dict,
-                title="Overall Importance:<br>Mean Absolute Score",
+                title=title,
                 start_zero=True,
+                xtitle="Mean Absolute Score"
             )
 
             return figure
@@ -115,13 +120,18 @@ class EBMExplanation(FeatureValueExplanation):
             self.explanation_type == "global"
             and self.feature_types[key] == "continuous"
         ):
-            title = self.feature_names[key]
+            # title = self.feature_names[key]
+            title = "Term: {0} - the contribution (score) of the term {0} to predictions made by the model." \
+                "<a href='https://github.com/interpretml/interpret/blob/develop/examples/python/notebooks/EBM%20Feature%20Importances.ipynb'>" \
+                "Learn More.</a>".format(self.feature_names[key])
+            xtitle = self.feature_names[key]
+
             if is_multiclass_global_data_dict(data_dict):
                 figure = plot_continuous_bar(
-                    data_dict, multiclass=True, show_error=False, title=title
+                    data_dict, multiclass=True, show_error=False, title=title, xtitle=xtitle
                 )
             else:
-                figure = plot_continuous_bar(data_dict, title=title)
+                figure = plot_continuous_bar(data_dict, title=title, xtitle=xtitle)
 
             return figure
 
