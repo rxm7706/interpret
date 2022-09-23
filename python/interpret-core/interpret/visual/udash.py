@@ -102,7 +102,7 @@ def generate_app_mini(
 
     # Items in drop-down.
     explanation, selector = ctx_item
-    data_options = [{"label": "Summary", "value": -1}]
+    data_options = [{"label": "Summary", "value": -1, "title": "Type to search for an option"}]
     options_list = []
 
     has_selector = selector is not None
@@ -112,11 +112,12 @@ def generate_app_mini(
         for i in range(len(selector)):
             col_strs = []
             for col_idx in range(min(3, len(selector.columns))):
-                col_strs.append(
-                    "{0} ({1})".format(
-                        selector.columns[col_idx], selector.iloc[i][col_idx]
-                    )
-                )
+                if selector.columns[col_idx] == "Name":
+                    tmp_str = "{0}".format(selector.iloc[i][col_idx])
+                else:
+                    tmp_str ="{0} ({1})".format(selector.columns[col_idx], selector.iloc[i][col_idx])
+
+                col_strs.append(tmp_str)
 
             label_str = " | ".join(col_strs)
             label_str = "{0} : {1}".format(i, label_str)
@@ -131,7 +132,7 @@ def generate_app_mini(
             html.Div(
                 [
                     html.Div(
-                        html.Div("Select Component to Graph", className="card-title"),
+                        html.Div("Select Component to Graph (Add text here)", className="card-title"),
                         className="card-header",
                     ),
                     html.Div(
@@ -139,6 +140,7 @@ def generate_app_mini(
                             dcc.Dropdown(
                                 id="component-drop",
                                 options=data_options,
+                                placeholder='Search...',
                                 multi=False,
                                 value=-1,
                             )
