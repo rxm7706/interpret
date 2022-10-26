@@ -59,6 +59,7 @@ const App = props => {
   );
 
   let renderable = <div className={"iml-empty-space"} />;
+  let help = null;
   let name = "";
 
   if (selectedOption !== null) {
@@ -66,10 +67,22 @@ const App = props => {
 
     let figure = null;
     let type = null;
+    let help_link = null;
     if (selectedOption === -1) {
       const overall = props.explanations.overall;
       figure = overall.figure;
       type = overall.type;
+      if (overall.help && Object.keys(overall.help).length > 0) {
+        help_link = null
+        if (overall.help.link) {
+          help_link = <a href={overall.help.link}>Learn more</a>
+        }
+        help = (
+          <div className={"iml-card-help"}>
+            {overall.help.text}{' '}{help_link}
+          </div>
+        );
+      }
     } else {
       const specific = props.explanations.specific[selectedOption];
       figure = specific.figure;
@@ -132,6 +145,7 @@ const App = props => {
           <div className="iml-card-title">{name}</div>
         </div>
         <div className="iml-card-body iml-card-renderable">{renderable}</div>
+        {help}
       </div>
     </div>
   );

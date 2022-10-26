@@ -102,9 +102,7 @@ class EBMExplanation(FeatureValueExplanation):
             data_dict = sort_take(
                 data_dict, sort_fn=lambda x: -abs(x), top_n=15, reverse_results=True
             )
-            title = "Overall Term Importances: the average absolute contribution (score) for each term " \
-                "(feature or interaction) makes<br>when predicting across the training dataset. " \
-                "<a href='https://github.com/interpretml/interpret/blob/develop/examples/python/notebooks/EBM%20Feature%20Importances.ipynb'>Learn More.</a>"
+            title = "Global Term Importances"
 
             figure = plot_horizontal_bar(
                 data_dict,
@@ -112,6 +110,9 @@ class EBMExplanation(FeatureValueExplanation):
                 start_zero=True,
                 xtitle="Mean Absolute Score"
             )
+
+            figure._interpret_help_text = "The term importances shown here are the the average absolute contribution (score) for each term " \
+                "(feature or interaction) makes when predicting across the training dataset. " 
 
             return figure
 
