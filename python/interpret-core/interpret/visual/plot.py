@@ -190,7 +190,7 @@ def plot_continuous_bar(
     # Add density
     if data_dict.get("density", None) is not None:
         figure = _plot_with_density(
-            data_dict["density"], main_fig, title=title, yrange=yrange, showlegend=show_legend
+            data_dict["density"], main_fig, title=title, xtitle=xtitle, yrange=yrange, showlegend=show_legend
         )
     else:
         figure = main_fig
@@ -293,7 +293,7 @@ def _plot_with_density(
     showlegend=False,
 ):
     bar_fig = plot_density(
-        data_dict, name=density_name, is_categorical=is_categorical, color=COLORS[1]
+        data_dict, xtitle=xtitle, name=density_name, is_categorical=is_categorical, color=COLORS[1]
     )
     figure = _two_plot(main_fig, bar_fig, title=title, share_xaxis=is_categorical, showlegend=showlegend)
     figure["layout"]["yaxis1"].update(title="Score")
@@ -304,12 +304,14 @@ def _plot_with_density(
         figure.update_xaxes(matches='x')
     if yrange is not None:
         figure["layout"]["yaxis1"].update(range=yrange)
+    if xtitle:
+        figure.update_xaxes(title_text=xtitle)
     return figure
 
 
-def _two_plot(main_fig, secondary_fig, title="", share_xaxis=True, showlegend=False):
+def _two_plot(main_fig, secondary_fig, title="", xtitle="", share_xaxis=True, showlegend=False):
     figure = subplots.make_subplots(
-        print_grid=False, shared_xaxes=share_xaxis, rows=2, cols=1
+        print_grid=False, shared_xaxes=share_xaxis, rows=2, cols=1, specs = [[{}], [{}]], vertical_spacing = 0.25
     )
     [figure.append_trace(datum, 1, 1) for datum in main_fig["data"]]
     [figure.append_trace(datum, 2, 1) for datum in secondary_fig["data"]]

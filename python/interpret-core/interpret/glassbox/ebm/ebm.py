@@ -111,8 +111,9 @@ class EBMExplanation(FeatureValueExplanation):
                 xtitle="Mean Absolute Score"
             )
 
-            figure._interpret_help_text = "The term importances shown here are the the average absolute contribution (score) for each term " \
-                "(feature or interaction) makes when predicting across the training dataset. " 
+            figure._interpret_help_text = "The term importances shown here are the the average " \
+                "absolute contribution (score) for each term  (feature or interaction) makes when " \
+                "predicting across the training dataset. " 
 
             return figure
 
@@ -121,10 +122,7 @@ class EBMExplanation(FeatureValueExplanation):
             self.explanation_type == "global"
             and self.feature_types[key] == "continuous"
         ):
-            # title = self.feature_names[key]
-            title = "Term: {0} - the contribution (score) of the term {0} to predictions made by the model." \
-                "<a href='https://github.com/interpretml/interpret/blob/develop/examples/python/notebooks/EBM%20Feature%20Importances.ipynb'>" \
-                "Learn More.</a>".format(self.feature_names[key])
+            title = "Term: {0}".format(self.feature_names[key])
             xtitle = self.feature_names[key]
 
             if is_multiclass_global_data_dict(data_dict):
@@ -134,9 +132,26 @@ class EBMExplanation(FeatureValueExplanation):
             else:
                 figure = plot_continuous_bar(data_dict, title=title, xtitle=xtitle)
 
+            figure._interpret_help_text = "The contribution (score) of the term {0} to predictions " \
+                "made by the model.".format(self.feature_names[key])
+
             return figure
 
-        return super().visualize(key)
+        # Local explanation, global categorical, or global interaction feature graph
+        figure = super().visualize(key, "Term: {0}".format(self.feature_names[key]))
+
+        if (self.explanation_type == "global" 
+            and (self.feature_types[key] == "interaction" or self.feature_types[key] == "categorical")):
+            figure._interpret_help_text = "The contribution (score) of the term {0} to predictions " \
+                "made by the model.".format(self.feature_names[key])
+        elif (self.explanation_type == "local"):
+            figure.update_layout(
+                title="Sample's Prediction Breakdown (" + figure.layout.title.text +")",
+                xaxis_title="Contribution to Prediction")
+            figure._interpret_help_text = "A local explanation shows the breakdown of how much " \
+                "each term contributed to the final prediction on a single sample. The graph shows " \
+                "up to 15 terms."
+        return figure
 
 
 def is_private(estimator):
