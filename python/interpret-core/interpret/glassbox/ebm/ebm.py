@@ -137,21 +137,26 @@ class EBMExplanation(FeatureValueExplanation):
 
             return figure
 
-        # Local explanation, global categorical, or global interaction feature graph
-        figure = super().visualize(key, "Term: {0}".format(self.feature_names[key]))
-
+        # Global categorical or global interaction graph
         if (self.explanation_type == "global" 
             and (self.feature_types[key] == "interaction" or self.feature_types[key] == "categorical")):
+            figure = super().visualize(key, "Term: {0}".format(self.feature_names[key]))
             figure._interpret_help_text = "The contribution (score) of the term {0} to predictions " \
                 "made by the model.".format(self.feature_names[key])
-        elif (self.explanation_type == "local"):
+
+            return figure
+
+        # Local explanation graph
+        if (self.explanation_type == "local"):
+            figure = super().visualize(key)
             figure.update_layout(
                 title="Sample's Prediction Breakdown (" + figure.layout.title.text +")",
                 xaxis_title="Contribution to Prediction")
             figure._interpret_help_text = "A local explanation shows the breakdown of how much " \
                 "each term contributed to the final prediction on a single sample. The graph shows " \
                 "up to 15 terms."
-        return figure
+
+            return figure
 
 
 def is_private(estimator):
