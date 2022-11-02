@@ -102,12 +102,14 @@ const App = props => {
       
       if (help && Object.keys(help).length > 0) {
         let help_link = null;
+        let help_text = help.text.trim();
         if (help.link) {
+          help_text = help_text + ' '
           help_link = <a href={help.link}>Learn more</a>
         }
         help_div = (
           <div className={"iml-card-help"}>
-            {help.text}{' '}{help_link}
+            {help_text}{help_link}
           </div>
         );
       }

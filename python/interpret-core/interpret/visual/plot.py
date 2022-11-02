@@ -295,7 +295,7 @@ def _plot_with_density(
     bar_fig = plot_density(
         data_dict, xtitle=xtitle, name=density_name, is_categorical=is_categorical, color=COLORS[1]
     )
-    figure = _two_plot(main_fig, bar_fig, title=title, share_xaxis=is_categorical, showlegend=showlegend)
+    figure = _two_plot(main_fig, bar_fig, title=title, xtitle=xtitle, share_xaxis=is_categorical, showlegend=showlegend)
     figure["layout"]["yaxis1"].update(title="Score")
     figure["layout"]["yaxis2"].update(title="Density")
     if not is_categorical:
@@ -304,14 +304,13 @@ def _plot_with_density(
         figure.update_xaxes(matches='x')
     if yrange is not None:
         figure["layout"]["yaxis1"].update(range=yrange)
-    if xtitle:
-        figure.update_xaxes(title_text=xtitle)
+
     return figure
 
 
 def _two_plot(main_fig, secondary_fig, title="", xtitle="", share_xaxis=True, showlegend=False):
     figure = subplots.make_subplots(
-        print_grid=False, shared_xaxes=share_xaxis, rows=2, cols=1, specs = [[{}], [{}]], vertical_spacing = 0.25
+        print_grid=False, shared_xaxes=share_xaxis, rows=2, cols=1, vertical_spacing=1.0
     )
     [figure.append_trace(datum, 1, 1) for datum in main_fig["data"]]
     [figure.append_trace(datum, 2, 1) for datum in secondary_fig["data"]]
@@ -319,6 +318,9 @@ def _two_plot(main_fig, secondary_fig, title="", xtitle="", share_xaxis=True, sh
     figure["layout"]["yaxis1"].update(domain=[0.40, 1.0])
     figure["layout"]["yaxis2"].update(domain=[0.0, 0.15])
 
+    if xtitle:
+        figure.update_xaxes(title_text=xtitle, row=1, col=1)
+        figure.update_xaxes(title_text=xtitle, row=2, col=1)
     return figure
 
 
