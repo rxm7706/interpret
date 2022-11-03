@@ -310,7 +310,7 @@ def _plot_with_density(
 
 def _two_plot(main_fig, secondary_fig, title="", xtitle="", share_xaxis=True, showlegend=False):
     figure = subplots.make_subplots(
-        print_grid=False, shared_xaxes=share_xaxis, rows=2, cols=1, vertical_spacing=1.0
+        print_grid=False, shared_xaxes=share_xaxis, rows=2, cols=1
     )
     [figure.append_trace(datum, 1, 1) for datum in main_fig["data"]]
     [figure.append_trace(datum, 2, 1) for datum in secondary_fig["data"]]
@@ -319,8 +319,8 @@ def _two_plot(main_fig, secondary_fig, title="", xtitle="", share_xaxis=True, sh
     figure["layout"]["yaxis2"].update(domain=[0.0, 0.15])
 
     if xtitle:
-        figure.update_xaxes(title_text=xtitle, row=1, col=1)
-        figure.update_xaxes(title_text=xtitle, row=2, col=1)
+        figure.update_xaxes(title_text=xtitle, row=1, col=1, title_standoff = 0)
+        figure.update_xaxes(title_text=xtitle, row=2, col=1, title_standoff = 0)
     return figure
 
 
