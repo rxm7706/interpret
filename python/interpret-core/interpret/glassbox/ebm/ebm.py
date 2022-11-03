@@ -102,18 +102,20 @@ class EBMExplanation(FeatureValueExplanation):
             data_dict = sort_take(
                 data_dict, sort_fn=lambda x: -abs(x), top_n=15, reverse_results=True
             )
-            title = "Global Term Importances"
+            title = "Global Term/Feature Importances"
 
             figure = plot_horizontal_bar(
                 data_dict,
                 title=title,
                 start_zero=True,
-                xtitle="Mean Absolute Score"
+                xtitle="Mean Absolute Score (Weighted)"
             )
 
-            figure._interpret_help_text = "The term importances shown here are the the average " \
+            figure._interpret_help_text = "The term importances shown here are the average " \
                 "absolute contribution (score) for each term  (feature or interaction) makes when " \
-                "predicting across the training dataset. " 
+                "predicting across the training dataset. "
+            figure._interpret_help_link = \
+                "https://github.com/interpretml/interpret/blob/develop/examples/python/notebooks/EBM%20Feature%20Importances.ipynb"
 
             return figure
 
@@ -150,7 +152,7 @@ class EBMExplanation(FeatureValueExplanation):
         if (self.explanation_type == "local"):
             figure = super().visualize(key)
             figure.update_layout(
-                title="Sample's Prediction Breakdown (" + figure.layout.title.text +")",
+                title="Local Explanation (" + figure.layout.title.text +")",
                 xaxis_title="Contribution to Prediction")
             figure._interpret_help_text = "A local explanation shows the breakdown of how much " \
                 "each term contributed to the final prediction on a single sample. The graph shows " \

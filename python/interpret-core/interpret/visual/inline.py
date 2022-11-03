@@ -64,8 +64,13 @@ def _build_viz_figure(visualization, detected_envs=None):
     elif isinstance(visualization, go.Figure):
         _type = "plotly"
         figure = json.loads(to_json(visualization))
-        if (hasattr(visualization, "_interpret_help_text")): 
-            link = synapse_help_link if ("azuresynapse" in detected_envs) else interpret_help_link
+        if (hasattr(visualization, "_interpret_help_text")):
+            if ("azuresynapse" in detected_envs):
+                link = synapse_help_link 
+            elif (hasattr(visualization, "_interpret_help_link")):
+                link = visualization._interpret_help_link
+            else:
+                link = interpret_help_link
             help = {"text": visualization._interpret_help_text, "link": link}
     elif isinstance(visualization, str):
         _type = "html"
