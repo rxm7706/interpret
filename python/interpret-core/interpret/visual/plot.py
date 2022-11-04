@@ -506,23 +506,25 @@ def plot_horizontal_bar(
             label_names = data_dict["meta"]["label_names"]
             predicted = label_names[predicted]
 
-            title_str = f"Predicted Class: {predicted}"
+            title_str = ""
+
             if not np.isnan(actual):
                 actual_class = label_names[actual]
-                title_str += f" | Actual Class: {actual_class}"
+                title_str += f"Actual Class: {actual_class} | "
 
+            title_str += f"Predicted Class: {predicted}"
             title_str += f"<br />Pr(y = {predicted}): {predicted_score:.3f}"
 
             if not np.isnan(actual) and len(set([predicted, actual])) == 2:
                 title_str += f" | Pr(y = {actual}): {actual_score:.3f}"
             title_items.append(title_str)
         else:  # Regression titles
-            predicted_score = _pretty_number(predicted_score)
-            title_items.append("Predicted: {}".format(predicted_score))
-
             if not np.isnan(actual):
                 actual_score = _pretty_number(actual_score)
                 title_items.append("Actual: {}".format(actual_score))
+
+            predicted_score = _pretty_number(predicted_score)
+            title_items.append("Predicted: {}".format(predicted_score))
 
         title = " | ".join(title_items)
     if not multiclass:
