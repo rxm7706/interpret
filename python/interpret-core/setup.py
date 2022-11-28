@@ -56,14 +56,15 @@ package_data = {
         "pytest.ini",
     ]
 }
-sklearn_dep = "scikit-learn>=0.18.1"
-joblib_dep = "joblib>=0.11"
+sklearn_dep = "scikit-learn>=0.18.1,<1.1.0"
+joblib_dep = "joblib>=0.11,<1.3.0"
 extras = {
     # Core
     "required": [
-        "numpy>=1.11.1",
-        "scipy>=0.18.1",
-        "pandas>=0.19.2",
+        "numpy>=1.21.0,<1.22.0",
+        "scipy>=0.18.1,<1.8.0",
+        "pandas>=0.19.2,<1.4.0",
+        "numpy>=1.21.0,<1.22.0",
         sklearn_dep,
         joblib_dep,
     ],
@@ -72,8 +73,8 @@ extras = {
     # Plotly (required if .visualize is ever called)
     "plotly": ["plotly>=3.8.1"],
     # Explainers
-    "lime": ["lime>=0.1.1.33"],
-    "sensitivity": ["SALib>=1.3.3"],
+    "lime": ["lime>=0.1.1.33", "matplotlib<3.6.0"],
+    "sensitivity": ["SALib>=1.3.3", "matplotlib<3.6.0"],
     "shap": ["shap>=0.28.5", "dill>=0.2.5"],
     "ebm": [joblib_dep],
     "linear": [],
@@ -84,7 +85,6 @@ extras = {
     "dash": [
         "dash>=1.0.0",
         "dash-cytoscape>=0.1.1",
-        "dash-table>=4.1.0",
         "gevent>=1.3.6",
         "requests>=2.19.0",
     ],
