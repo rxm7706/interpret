@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="ApplyTermUpdate.cpp" />
+    <ClCompile Include="BinSumsBoosting.cpp" />
+    <ClCompile Include="BinSumsInteraction.cpp" />
+    <ClCompile Include="dataset_shared.cpp" />
+    <ClCompile Include="CutQuantile.cpp" />
+    <ClCompile Include="CutUniform.cpp" />
+    <ClCompile Include="CutWinsorized.cpp" />
+    <ClCompile Include="BoosterShell.cpp" />
+    <ClCompile Include="InteractionShell.cpp" />
+    <ClCompile Include="CalcInteractionStrength.cpp" />
+    <ClCompile Include="PartitionRandomBoosting.cpp" />
+    <ClCompile Include="debug_ebm.cpp" />
+    <ClCompile Include="Term.cpp" />
+    <ClCompile Include="PartitionTwoDimensionalBoosting.cpp" />
+    <ClCompile Include="PartitionTwoDimensionalInteraction.cpp" />
+    <ClCompile Include="GenerateTermUpdate.cpp" />
+    <ClCompile Include="PartitionOneDimensionalBoosting.cpp" />
+    <ClCompile Include="InitializeGradientsAndHessians.cpp" />
+    <ClCompile Include="interpretable_numerics.cpp" />
+    <ClCompile Include="sampling.cpp" />
+    <ClCompile Include="Tensor.cpp" />
+    <ClCompile Include="TensorTotalsBuild.cpp" />
+    <ClCompile Include="DataSetInteraction.cpp" />
+    <ClCompile Include="DataSetBoosting.cpp" />
+    <ClCompile Include="Discretize.cpp" />
+    <ClCompile Include="InteractionCore.cpp" />
+    <ClCompile Include="RandomDeterministic.cpp" />
+    <ClCompile Include="InnerBag.cpp" />
+    <ClCompile Include="BoosterCore.cpp" />
+    <ClCompile Include="special\linux_wrap_functions.cpp">
+      <Filter>special</Filter>
+    </ClCompile>
+    <ClCompile Include="special\windows_DllMain.cpp">
+      <Filter>special</Filter>
+    </ClCompile>
+    <ClCompile Include="special\precompiled_header_cpp.cpp">
+      <Filter>special</Filter>
+    </ClCompile>
+    <ClCompile Include="common_c\common_c.c">
+      <Filter>common_c</Filter>
+    </ClCompile>
+    <ClCompile Include="common_c\logging.c">
+      <Filter>common_c</Filter>
+    </ClCompile>
+    <ClCompile Include="random.cpp" />
+    <ClCompile Include="ApplyUpdate.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="approximate_math.hpp" />
+    <ClInclude Include="InteractionShell.hpp" />
+    <ClInclude Include="InteractionCore.hpp" />
+    <ClInclude Include="BoosterCore.hpp" />
+    <ClInclude Include="Feature.hpp" />
+    <ClInclude Include="Term.hpp" />
+    <ClInclude Include="BoosterShell.hpp" />
+    <ClInclude Include="DataSetInteraction.hpp" />
+    <ClInclude Include="DataSetBoosting.hpp" />
+    <ClInclude Include="ebm_internal.hpp" />
+    <ClInclude Include="ebm_stats.hpp" />
+    <ClInclude Include="precompiled_header_cpp.hpp" />
+    <ClInclude Include="RandomDeterministic.hpp" />
+    <ClInclude Include="InnerBag.hpp" />
+    <ClInclude Include="Tensor.hpp" />
+    <ClInclude Include="TensorTotalsSum.hpp" />
+    <ClInclude Include="TreeNode.hpp" />
+    <ClInclude Include="SplitPosition.hpp" />
+    <ClInclude Include="inc\ebm_native.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="bridge_c\bridge_c.h">
+      <Filter>bridge_c</Filter>
+    </ClInclude>
+    <ClInclude Include="bridge_c\zones.h">
+      <Filter>bridge_c</Filter>
+    </ClInclude>
+    <ClInclude Include="common_c\common_c.h">
+      <Filter>common_c</Filter>
+    </ClInclude>
+    <ClInclude Include="bridge_cpp\bridge_cpp.hpp">
+      <Filter>bridge_cpp</Filter>
+    </ClInclude>
+    <ClInclude Include="common_cpp\common_cpp.hpp">
+      <Filter>common_cpp</Filter>
+    </ClInclude>
+    <ClInclude Include="common_c\logging.h">
+      <Filter>common_c</Filter>
+    </ClInclude>
+    <ClInclude Include="compute_accessors.hpp" />
+    <ClInclude Include="dataset_shared.hpp" />
+    <ClInclude Include="GaussianDistribution.hpp" />
+    <ClInclude Include="RandomNondeterministic.hpp" />
+    <ClInclude Include="bridge_cpp\Bin.hpp">
+      <Filter>bridge_cpp</Filter>
+    </ClInclude>
+    <ClInclude Include="bridge_cpp\GradientPair.hpp">
+      <Filter>bridge_cpp</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ebm_native_exports.def" />
+    <None Include="CODING_STYLE.md" />
+    <None Include="IMPORTANT.md" />
+    <None Include="include_ordering.txt" />
+    <None Include="ebm_native_exports.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="inc">
+      <UniqueIdentifier>{5cd9d4c4-93e3-4127-8d1e-496270df544a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="special">
+      <UniqueIdentifier>{3c75c63a-6df6-4cd6-91e2-ee80ef96f468}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="bridge_c">
+      <UniqueIdentifier>{32bfc9ca-2159-409b-89d1-af8034257dd1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common_c">
+      <UniqueIdentifier>{1daae48a-6372-46a2-a0e9-dda3519eb4b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="bridge_cpp">
+      <UniqueIdentifier>{00aba3da-146d-462c-8f27-c3675127ae35}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common_cpp">
+      <UniqueIdentifier>{48382ee5-df51-4d4d-92ce-dbd4c773ed4e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

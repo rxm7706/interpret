@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="ebm_native_test.cpp">
+      <Filter>non_tests</Filter>
+    </ClCompile>
+    <ClCompile Include="precompiled_header_test.cpp">
+      <Filter>non_tests</Filter>
+    </ClCompile>
+    <ClCompile Include="bit_packing_extremes.cpp" />
+    <ClCompile Include="boosting_unusual_inputs.cpp" />
+    <ClCompile Include="DiscretizeTest.cpp" />
+    <ClCompile Include="interaction_unusual_inputs.cpp" />
+    <ClCompile Include="rehydrate_booster.cpp" />
+    <ClCompile Include="SuggestGraphBoundsTest.cpp" />
+    <ClCompile Include="random_test.cpp" />
+    <ClCompile Include="include_c.c" />
+    <ClCompile Include="CutQuantileTest.cpp" />
+    <ClCompile Include="CutUniformTest.cpp" />
+    <ClCompile Include="CutWinsorizedTest.cpp" />
+    <ClCompile Include="dataset_shared_test.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ebm_native_test.hpp">
+      <Filter>non_tests</Filter>
+    </ClInclude>
+    <ClInclude Include="precompiled_header_test.hpp">
+      <Filter>non_tests</Filter>
+    </ClInclude>
+    <ClInclude Include="RandomStreamTest.hpp">
+      <Filter>non_tests</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ebm_native_test.bat">
+      <Filter>non_tests</Filter>
+    </None>
+    <None Include="ebm_native_test.sh">
+      <Filter>non_tests</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="non_tests">
+      <UniqueIdentifier>{84b2958e-0438-486e-bd4e-5cd6c8baf903}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

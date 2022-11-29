@@ -1,6 +1,6 @@
 *.pyc
 build/
-dist/
+#dist/
 docs/_build/
 *.egg-info/
 .coverage
@@ -8,7 +8,8 @@ docs/_build/
 *.ignore
 *.ipynb_checkpoints/
 *junit/
-lib/
+#lib/
+#script: npm install --package-lock-only --ignore-scripts /python/interpret-core/interpret/lib/
 log.txt
 test-log.txt
 dev-log.txt
@@ -18,4 +19,7 @@ dev-log.txt
 geckodriver.log
 coverage.xml
 htmlcov/
-symbolic/
+symbolic/python/
+symbolic/staging/
+symbolic/tmp/
+# script: cp -r shared python/interpret-core/symbolic/shared
